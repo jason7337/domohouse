@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "678637334020",
+    "firebase_url": "https://domohouse-809c4-default-rtdb.firebaseio.com",
+    "project_id": "domohouse-809c4",
+    "storage_bucket": "domohouse-809c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:678637334020:android:112ec064d3f7ce90260f51",
+        "android_client_info": {
+          "package_name": "com.pdm.domohouse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaPqCGY34hDX2O6sYg7FYpCyxdx8r9Baw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
