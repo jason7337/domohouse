@@ -154,10 +154,10 @@ Proyecto académico - Universidad/Instituto
 
 ## 👥 Equipo
 
-- Desarrollo Android: [Tu nombre]
+- Desarrollo Android: Jasson Gomez
 - Backend Python: [Por asignar]
 - Hardware ESP32: [Por asignar]
 
 ---
 
-**Última actualización**: 10/6/2025 - v0.1.0 (Configuración inicial)
+**Última actualización**: 12/6/2025 - v0.3.0 (Configuración inicial)
