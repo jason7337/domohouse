@@ -1,10 +1,13 @@
 package com.pdm.domohouse.ui.home;
 
 import android.animation.ObjectAnimator;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -12,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.pdm.domohouse.R;
 import com.pdm.domohouse.data.model.Room;
@@ -97,7 +101,7 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         });
 
         // Observar mensajes de error
-        viewModel.errorMessage.observe(getViewLifecycleOwner(), errorMessage -> {
+        viewModel.error.observe(getViewLifecycleOwner(), errorMessage -> {
             if (errorMessage != null && !errorMessage.isEmpty()) {
                 Toast.makeText(getContext(), errorMessage, Toast.LENGTH_SHORT).show();
             }
@@ -120,6 +124,63 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
             
             Toast.makeText(getContext(), getString(R.string.refresh_data), Toast.LENGTH_SHORT).show();
         });
+        
+        // Botón de menú contextual
+        binding.menuButton.setOnClickListener(v -> showPopupMenu(v));
+    }
+    
+    /**
+     * Muestra el menú contextual
+     */
+    private void showPopupMenu(View anchor) {
+        PopupMenu popup = new PopupMenu(getContext(), anchor);
+        popup.getMenuInflater().inflate(R.menu.home_popup_menu, popup.getMenu());
+        
+        popup.setOnMenuItemClickListener(this::onMenuItemClick);
+        popup.show();
+    }
+    
+    /**
+     * Maneja la selección de elementos del menú
+     */
+    private boolean onMenuItemClick(MenuItem item) {
+        int itemId = item.getItemId();
+        
+        if (itemId == R.id.menu_profile) {
+            // Navegar a perfil
+            Navigation.findNavController(binding.getRoot())
+                .navigate(R.id.action_home_to_profile);
+            return true;
+        } else if (itemId == R.id.menu_settings) {
+            // Navegar a configuración
+            Navigation.findNavController(binding.getRoot())
+                .navigate(R.id.action_home_to_settings);
+            return true;
+        } else if (itemId == R.id.menu_logout) {
+            // Mostrar confirmación de cierre de sesión
+            showLogoutConfirmation();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Muestra confirmación para cerrar sesión
+     */
+    private void showLogoutConfirmation() {
+        new AlertDialog.Builder(getContext())
+            .setTitle("Cerrar Sesión")
+            .setMessage("¿Estás seguro de que quieres cerrar sesión?")
+            .setPositiveButton("Sí", (dialog, which) -> {
+                // Realizar logout
+                viewModel.logout();
+                // Navegar a login
+                Navigation.findNavController(binding.getRoot())
+                    .navigate(R.id.action_home_to_login);
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
     }
 
     /**

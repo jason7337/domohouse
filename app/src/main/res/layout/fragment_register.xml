@@ -62,18 +62,119 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/titleTextView" />
 
+            <!-- Sección Foto de Perfil -->
+            <TextView
+                android:id="@+id/photoSectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="Foto de perfil"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/subtitleTextView" />
+
+            <!-- Descripción Foto -->
+            <TextView
+                android:id="@+id/photoDescriptionTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Agrega una foto para personalizar tu perfil (opcional)"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/photoSectionTitle" />
+
+            <!-- Foto de Perfil Container -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/profilePhotoCard"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/photoDescriptionTextView">
+
+                <ImageView
+                    android:id="@+id/profilePhotoImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/surface"
+                    android:src="@drawable/ic_person"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Foto de perfil" />
+
+                <!-- Overlay para agregar/cambiar foto -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/photo_overlay_background"
+                    android:alpha="0.7" />
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_camera"
+                    android:contentDescription="Agregar foto"
+                    app:tint="@color/white" />
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Botones para Foto -->
+            <LinearLayout
+                android:id="@+id/photoButtonsLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/profilePhotoCard">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectFromGalleryButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Galería"
+                    android:textSize="12sp"
+                    android:padding="8dp"
+                    app:strokeColor="@color/primary"
+                    android:textColor="@color/primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/takePhotoButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Cámara"
+                    android:textSize="12sp"
+                    android:padding="8dp"
+                    app:strokeColor="@color/primary"
+                    android:textColor="@color/primary" />
+
+            </LinearLayout>
+
             <!-- Campo Nombre -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/nameInputLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:hint="Nombre completo"
-                app:startIconDrawable="@drawable/ic_email"
+                app:startIconDrawable="@drawable/ic_person"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/subtitleTextView">
+                app:layout_constraintTop_toBottomOf="@id/photoButtonsLayout">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/nameEditText"

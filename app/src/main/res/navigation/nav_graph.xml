@@ -106,6 +106,36 @@
             app:destination="@id/securityFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left" />
+            
+        <!-- Navegación a perfil -->
+        <action
+            android:id="@+id/action_home_to_profile"
+            app:destination="@id/profileFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
+            
+        <!-- Navegación a dispositivos -->
+        <action
+            android:id="@+id/action_home_to_devices"
+            app:destination="@id/devicesFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
+            
+        <!-- Navegación a configuración -->
+        <action
+            android:id="@+id/action_home_to_settings"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
+            
+        <!-- Navegación a login para logout -->
+        <action
+            android:id="@+id/action_home_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
     </fragment>
 
     <!-- Fragmento de Control de Luces -->
@@ -128,5 +158,36 @@
         android:name="com.pdm.domohouse.ui.security.SecurityFragment"
         android:label="@string/security_title"
         tools:layout="@layout/fragment_security" />
+
+    <!-- Fragmento de Perfil -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.pdm.domohouse.ui.profile.ProfileFragment"
+        android:label="@string/profile_title"
+        tools:layout="@layout/fragment_profile">
+        
+        <!-- Navegación de vuelta a login después del logout -->
+        <action
+            android:id="@+id/action_profile_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
+    </fragment>
+
+    <!-- Fragmento de Dispositivos -->
+    <fragment
+        android:id="@+id/devicesFragment"
+        android:name="com.pdm.domohouse.ui.devices.DevicesFragment"
+        android:label="@string/devices_title"
+        tools:layout="@layout/fragment_devices" />
+
+    <!-- Fragmento de Configuración -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.pdm.domohouse.ui.settings.SettingsFragment"
+        android:label="@string/settings_title"
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>

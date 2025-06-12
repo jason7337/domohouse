@@ -125,6 +125,13 @@ public class Device {
     public void setSignalStrength(int signalStrength) { 
         this.signalStrength = Math.max(0, Math.min(100, signalStrength)); 
     }
+    
+    // Métodos de compatibilidad para sincronización
+    public boolean isOnline() { return connected; }
+    public void setOnline(boolean online) { 
+        this.connected = online;
+        updateLastUpdated();
+    }
 
     /**
      * Actualiza el timestamp de última actualización

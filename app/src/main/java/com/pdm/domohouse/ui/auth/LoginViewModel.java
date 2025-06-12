@@ -2,6 +2,7 @@ package com.pdm.domohouse.ui.auth;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 
 import androidx.lifecycle.LiveData;
@@ -9,6 +10,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.auth.FirebaseUser;
 import com.pdm.domohouse.network.FirebaseAuthManager;
+import com.pdm.domohouse.data.database.AppDatabase;
+import com.pdm.domohouse.data.database.entity.UserProfileEntity;
+import com.pdm.domohouse.sync.SyncManager;
 import com.pdm.domohouse.ui.base.BaseViewModel;
 import com.pdm.domohouse.utils.SecurePreferencesManager;
 
@@ -21,6 +25,9 @@ public class LoginViewModel extends BaseViewModel {
     // Managers para autenticación
     private final FirebaseAuthManager firebaseAuthManager;
     private SecurePreferencesManager securePreferencesManager;
+    private AppDatabase database;
+    private SyncManager syncManager;
+    private Context appContext;
     
     // Campos del formulario con Two-Way Data Binding
     private final MutableLiveData<String> _email = new MutableLiveData<>("");
@@ -59,7 +66,10 @@ public class LoginViewModel extends BaseViewModel {
      * @param context Contexto de la aplicación
      */
     public void initializeSecurePreferences(Context context) {
+        this.appContext = context.getApplicationContext();
         this.securePreferencesManager = SecurePreferencesManager.getInstance(context);
+        this.database = AppDatabase.getDatabase(context);
+        this.syncManager = SyncManager.getInstance(context);
     }
     
     /**
@@ -80,8 +90,14 @@ public class LoginViewModel extends BaseViewModel {
         // Mostrar estado de carga
         setLoading(true);
         
-        // Autenticar con Firebase
-        authenticateWithFirebase(emailValue, passwordValue);
+        // Verificar si hay conexión a internet
+        if (syncManager != null && syncManager.isOnline()) {
+            // Autenticar con Firebase (online)
+            authenticateWithFirebase(emailValue, passwordValue);
+        } else {
+            // Intentar login offline
+            attemptOfflineLogin(emailValue, passwordValue);
+        }
     }
     
     /**
@@ -93,6 +109,10 @@ public class LoginViewModel extends BaseViewModel {
         firebaseAuthManager.signInWithEmailAndPassword(email, password, new FirebaseAuthManager.AuthCallback() {
             @Override
             public void onSuccess(FirebaseUser user) {
+                // Guardar perfil en base de datos local para acceso offline
+                saveUserProfileLocally(user);
+                // Sincronizar datos
+                syncManager.syncAll();
                 setLoading(false);
                 _navigateToHome.postValue(true);
             }
@@ -301,5 +321,85 @@ public class LoginViewModel extends BaseViewModel {
      */
     public boolean isUserSignedIn() {
         return firebaseAuthManager.isUserSignedIn();
+    }
+    
+    /**
+     * Intenta login offline con credenciales almacenadas localmente
+     * @param email Email del usuario
+     * @param password Contraseña del usuario (se verificará con hash almacenado)
+     */
+    private void attemptOfflineLogin(String email, String password) {
+        if (database == null) {
+            setLoading(false);
+            setError("No se puede acceder sin conexión en este momento");
+            return;
+        }
+        
+        // Buscar en base de datos local en background thread
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                UserProfileEntity userProfile = database.userProfileDao().getUserProfileByEmail(email);
+                
+                if (userProfile != null) {
+                    // Verificar si tiene PIN almacenado
+                    String storedPin = securePreferencesManager.getStoredPin();
+                    if (storedPin != null && !storedPin.isEmpty()) {
+                        // Usuario encontrado localmente
+                        securePreferencesManager.setCurrentUserId(userProfile.getUserId());
+                        setLoading(false);
+                        _navigateToHome.postValue(true);
+                        setError("Acceso sin conexión - Funcionalidad limitada");
+                    } else {
+                        setLoading(false);
+                        setError("Se requiere conexión a internet para el primer acceso");
+                    }
+                } else {
+                    setLoading(false);
+                    setError("Usuario no encontrado. Se requiere conexión a internet");
+                }
+            } catch (Exception e) {
+                setLoading(false);
+                setError("Error al acceder sin conexión");
+            }
+        });
+    }
+    
+    /**
+     * Guarda el perfil del usuario localmente para acceso offline
+     * @param user Usuario de Firebase autenticado
+     */
+    private void saveUserProfileLocally(FirebaseUser user) {
+        if (database == null || user == null) return;
+        
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                UserProfileEntity existingProfile = database.userProfileDao().getUserProfileSync(user.getUid());
+                
+                if (existingProfile == null) {
+                    // Crear nuevo perfil local
+                    UserProfileEntity newProfile = new UserProfileEntity();
+                    newProfile.setUserId(user.getUid());
+                    newProfile.setEmail(user.getEmail());
+                    newProfile.setName(user.getDisplayName() != null ? user.getDisplayName() : "");
+                    newProfile.setPhotoUrl(user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "");
+                    newProfile.setSynced(true);
+                    newProfile.setLastSync(System.currentTimeMillis());
+                    
+                    database.userProfileDao().insert(newProfile);
+                } else {
+                    // Actualizar perfil existente
+                    existingProfile.setEmail(user.getEmail());
+                    existingProfile.setLastSync(System.currentTimeMillis());
+                    existingProfile.setSynced(true);
+                    
+                    database.userProfileDao().update(existingProfile);
+                }
+                
+                // Guardar ID del usuario actual
+                securePreferencesManager.setCurrentUserId(user.getUid());
+            } catch (Exception e) {
+                Log.e("LoginViewModel", "Error guardando perfil localmente", e);
+            }
+        });
     }
 }

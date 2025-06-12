@@ -1,33 +1,51 @@
 package com.pdm.domohouse.ui.home;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import android.app.Application;
+import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
+
+import com.pdm.domohouse.cache.DeviceCache;
+import com.pdm.domohouse.data.database.AppDatabase;
+import com.pdm.domohouse.data.database.entity.DeviceEntity;
+import com.pdm.domohouse.data.database.entity.RoomEntity;
 import com.pdm.domohouse.data.model.Device;
 import com.pdm.domohouse.data.model.DeviceType;
 import com.pdm.domohouse.data.model.Room;
 import com.pdm.domohouse.data.model.RoomStatus;
 import com.pdm.domohouse.data.model.RoomType;
+import com.pdm.domohouse.sync.SyncManager;
 import com.pdm.domohouse.ui.base.BaseViewModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * ViewModel para el Dashboard Principal (HomeFragment)
  * Maneja la lógica de negocio para la vista de maqueta de casa y estados de dispositivos
  */
-public class HomeViewModel extends BaseViewModel {
+public class HomeViewModel extends AndroidViewModel {
+
+    // Cache y base de datos
+    private final DeviceCache deviceCache;
+    private final AppDatabase database;
+    private final SyncManager syncManager;
 
     // LiveData para las habitaciones de la casa
-    private final MutableLiveData<List<Room>> _rooms = new MutableLiveData<>();
+    private final LiveData<List<RoomEntity>> roomsFromDb;
+    private final MediatorLiveData<List<Room>> _rooms = new MediatorLiveData<>();
     public final LiveData<List<Room>> rooms = _rooms;
 
     // LiveData para los dispositivos de la casa
-    private final MutableLiveData<List<Device>> _devices = new MutableLiveData<>();
+    private final LiveData<List<DeviceEntity>> devicesFromDb;
+    private final MediatorLiveData<List<Device>> _devices = new MediatorLiveData<>();
     public final LiveData<List<Device>> devices = _devices;
 
     // LiveData para estadísticas generales
@@ -38,39 +56,101 @@ public class HomeViewModel extends BaseViewModel {
     private final MutableLiveData<Room> _selectedRoom = new MutableLiveData<>();
     public final LiveData<Room> selectedRoom = _selectedRoom;
 
+    // Estado de carga y error
+    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
+    public final LiveData<Boolean> isLoading = _isLoading;
+    
+    private final MutableLiveData<String> _error = new MutableLiveData<>();
+    public final LiveData<String> error = _error;
+
+    // Estado de sincronización
+    private final MutableLiveData<Boolean> _isSyncing = new MutableLiveData<>(false);
+    public final LiveData<Boolean> isSyncing = _isSyncing;
+
     // Mapa de dispositivos por habitación para acceso rápido
     private Map<String, List<Device>> devicesByRoom = new HashMap<>();
 
-    // Random para simular datos cambiantes
-    private Random random = new Random();
-
     /**
-     * Constructor - Inicializa el ViewModel con datos de ejemplo
+     * Constructor - Inicializa el ViewModel con cache y base de datos
      */
-    public HomeViewModel() {
-        initializeMockData();
-        updateDashboardStats();
+    public HomeViewModel(@NonNull Application application) {
+        super(application);
+        Context context = application.getApplicationContext();
+        
+        // Inicializar componentes
+        this.deviceCache = DeviceCache.getInstance(context);
+        this.database = AppDatabase.getDatabase(context);
+        this.syncManager = SyncManager.getInstance(context);
+        
+        // Observar datos de la base de datos
+        roomsFromDb = database.roomDao().getAllRooms();
+        devicesFromDb = deviceCache.getAllDevices();
+        
+        // Configurar observadores
+        setupDataObservers();
+        
+        // Pre-cargar cache
+        deviceCache.preloadDevices();
+        
+        // Sincronizar si hay conexión
+        if (syncManager.isOnline()) {
+            syncData();
+        }
     }
 
     /**
-     * Inicializa datos de ejemplo para el dashboard
-     * En una implementación real, estos datos vendrían del backend/base de datos
+     * Configura observadores para datos de la base de datos
      */
-    private void initializeMockData() {
-        setLoading(true);
-
-        // Crear habitaciones de ejemplo
-        List<Room> mockRooms = createMockRooms();
-        _rooms.postValue(mockRooms);
-
-        // Crear dispositivos de ejemplo
-        List<Device> mockDevices = createMockDevices(mockRooms);
-        _devices.postValue(mockDevices);
-
-        // Organizar dispositivos por habitación
-        organizarDispositivosPorHabitacion(mockDevices);
-
-        setLoading(false);
+    private void setupDataObservers() {
+        // Observar cambios en habitaciones
+        _rooms.addSource(roomsFromDb, roomEntities -> {
+            if (roomEntities != null) {
+                List<Room> rooms = convertRoomEntitiesToRooms(roomEntities);
+                _rooms.setValue(rooms);
+                updateDashboardStats();
+            }
+        });
+        
+        // Observar cambios en dispositivos
+        _devices.addSource(devicesFromDb, deviceEntities -> {
+            if (deviceEntities != null) {
+                List<Device> devices = convertDeviceEntitiesToDevices(deviceEntities);
+                _devices.setValue(devices);
+                organizarDispositivosPorHabitacion(devices);
+                updateDashboardStats();
+            }
+        });
+        
+        // Observar estado de sincronización
+        syncManager.getSyncStatus().observeForever(status -> {
+            switch (status) {
+                case SYNCING:
+                    _isSyncing.setValue(true);
+                    break;
+                case SUCCESS:
+                    _isSyncing.setValue(false);
+                    _error.setValue(null);
+                    break;
+                case ERROR:
+                    _isSyncing.setValue(false);
+                    _error.setValue("Error de sincronización");
+                    break;
+                case CONFLICT:
+                    _isSyncing.setValue(false);
+                    _error.setValue("Conflictos de sincronización detectados");
+                    break;
+                default:
+                    _isSyncing.setValue(false);
+                    break;
+            }
+        });
+    }
+    
+    /**
+     * Sincroniza datos con Firebase
+     */
+    private void syncData() {
+        syncManager.syncAll();
     }
 
     /**
@@ -93,14 +173,14 @@ public class HomeViewModel extends BaseViewModel {
         // Exterior
         rooms.add(new Room("garage", "Garaje", RoomType.GARAGE, 0.7f, 0.7f, 0.25f, 0.25f));
 
-        // Configurar valores iniciales aleatorios para sensores
+        // Configurar valores iniciales para sensores
         for (Room room : rooms) {
-            room.setTemperature(20 + random.nextFloat() * 8); // 20-28°C
-            room.setHumidity(40 + random.nextFloat() * 30);   // 40-70%
-            room.setLightLevel(random.nextInt(101));          // 0-100%
-            room.setFanSpeed(random.nextInt(51));             // 0-50%
-            room.setDoorOpen(random.nextBoolean());
-            room.setWindowOpen(random.nextBoolean());
+            room.setTemperature(22.0f); // Temperatura estándar
+            room.setHumidity(45.0f);    // Humedad estándar
+            room.setLightLevel(50);     // 50% de luz
+            room.setFanSpeed(0);        // Ventilador apagado
+            room.setDoorOpen(false);
+            room.setWindowOpen(false);
         }
 
         return rooms;
@@ -188,19 +268,18 @@ public class HomeViewModel extends BaseViewModel {
             }
         }
 
-        // Configurar valores aleatorios para los dispositivos
+        // Configurar valores por defecto para los dispositivos
         for (Device device : devices) {
-            device.setConnected(random.nextFloat() > 0.1f); // 90% conectados
-            device.setSignalStrength(70 + random.nextInt(31)); // 70-100%
-            device.setBatteryLevel(device.getType().isBatteryPowered() ? 
-                                 20 + random.nextInt(81) : 100); // 20-100% o 100%
+            device.setConnected(true); // Todos conectados por defecto
+            device.setSignalStrength(85); // Señal buena
+            device.setBatteryLevel(device.getType().isBatteryPowered() ? 85 : 100); // Batería buena
 
             if (device.getType().isSwitch()) {
-                device.setEnabled(random.nextBoolean());
+                device.setEnabled(false); // Switches apagados por defecto
                 device.setCurrentValue(device.isEnabled() ? 1 : 0);
             } else {
-                float range = device.getMaxValue() - device.getMinValue();
-                device.setCurrentValue(device.getMinValue() + random.nextFloat() * range);
+                float midValue = (device.getMaxValue() + device.getMinValue()) / 2;
+                device.setCurrentValue(midValue);
                 device.setEnabled(device.getCurrentValue() > device.getMinValue());
             }
         }
@@ -318,79 +397,167 @@ public class HomeViewModel extends BaseViewModel {
      * Actualiza el estado de un dispositivo
      */
     public void updateDeviceState(String deviceId, boolean enabled) {
+        // Actualizar en cache y base de datos
+        deviceCache.updateDeviceState(deviceId, enabled);
+        
+        // Actualizar lista local para UI inmediata
         List<Device> currentDevices = _devices.getValue();
-        if (currentDevices == null) return;
-
-        for (Device device : currentDevices) {
-            if (device.getId().equals(deviceId)) {
-                device.setEnabled(enabled);
-                if (device.getType().isSwitch()) {
-                    device.setCurrentValue(enabled ? 1 : 0);
+        if (currentDevices != null) {
+            for (Device device : currentDevices) {
+                if (device.getId().equals(deviceId)) {
+                    device.setEnabled(enabled);
+                    if (device.getType().isSwitch()) {
+                        device.setCurrentValue(enabled ? 1 : 0);
+                    }
+                    break;
                 }
-                break;
             }
+            _devices.postValue(currentDevices);
+            organizarDispositivosPorHabitacion(currentDevices);
+            updateDashboardStats();
         }
-
-        _devices.postValue(currentDevices);
-        organizarDispositivosPorHabitacion(currentDevices);
-        updateDashboardStats();
     }
 
     /**
      * Actualiza el valor de un dispositivo
      */
     public void updateDeviceValue(String deviceId, float value) {
+        // Actualizar intensidad en cache y base de datos
+        deviceCache.updateDeviceIntensity(deviceId, (int) value);
+        
+        // Actualizar lista local para UI inmediata
         List<Device> currentDevices = _devices.getValue();
-        if (currentDevices == null) return;
-
-        for (Device device : currentDevices) {
-            if (device.getId().equals(deviceId)) {
-                device.setCurrentValue(value);
-                device.setEnabled(value > device.getMinValue());
-                break;
-            }
-        }
-
-        _devices.postValue(currentDevices);
-        organizarDispositivosPorHabitacion(currentDevices);
-        updateDashboardStats();
-    }
-
-    /**
-     * Simula actualización de datos de sensores
-     * En una implementación real, esto vendría del backend en tiempo real
-     */
-    public void refreshSensorData() {
-        setLoading(true);
-
-        List<Room> currentRooms = _rooms.getValue();
-        List<Device> currentDevices = _devices.getValue();
-
-        if (currentRooms != null) {
-            // Simular cambios en sensores de habitaciones
-            for (Room room : currentRooms) {
-                if (random.nextFloat() > 0.7f) { // 30% de probabilidad de cambio
-                    room.setTemperature(room.getTemperature() + (random.nextFloat() - 0.5f) * 2);
-                    room.setHumidity(room.getHumidity() + (random.nextFloat() - 0.5f) * 5);
-                }
-            }
-            _rooms.postValue(currentRooms);
-        }
-
         if (currentDevices != null) {
-            // Simular cambios en dispositivos sensores
             for (Device device : currentDevices) {
-                if (device.isSensor() && random.nextFloat() > 0.8f) { // 20% probabilidad
-                    float range = device.getMaxValue() - device.getMinValue();
-                    float newValue = device.getCurrentValue() + (random.nextFloat() - 0.5f) * range * 0.1f;
-                    device.setCurrentValue(newValue);
+                if (device.getId().equals(deviceId)) {
+                    device.setCurrentValue(value);
+                    device.setEnabled(value > device.getMinValue());
+                    break;
                 }
             }
             _devices.postValue(currentDevices);
+            organizarDispositivosPorHabitacion(currentDevices);
+            updateDashboardStats();
         }
+    }
 
-        updateDashboardStats();
-        setLoading(false);
+    /**
+     * Refresca datos de sensores desde Firebase o cache local
+     */
+    public void refreshSensorData() {
+        _isLoading.setValue(true);
+        
+        // Si hay conexión, sincronizar con Firebase
+        if (syncManager.isOnline()) {
+            syncManager.syncAll();
+        } else {
+            // Si no hay conexión, refrescar desde cache local
+            deviceCache.preloadDevices();
+            _isLoading.setValue(false);
+        }
+    }
+    
+    /**
+     * Cierra la sesión del usuario actual
+     */
+    public void logout() {
+        // Limpiar cache
+        deviceCache.invalidateCache();
+        _error.setValue("Cerrando sesión...");
+    }
+    
+    /**
+     * Convierte entidades de Room a modelos de Room
+     */
+    private List<Room> convertRoomEntitiesToRooms(List<RoomEntity> entities) {
+        List<Room> rooms = new ArrayList<>();
+        for (RoomEntity entity : entities) {
+            Room room = new Room(
+                entity.getRoomId(),
+                entity.getName(),
+                convertStringToRoomType(entity.getRoomType()),
+                entity.getPositionX(),
+                entity.getPositionY(),
+                0.3f, // width por defecto
+                0.3f  // height por defecto
+            );
+            
+            // Configurar valores adicionales desde dispositivos
+            List<Device> roomDevices = getDevicesForRoom(entity.getRoomId());
+            for (Device device : roomDevices) {
+                if (device.getType() == DeviceType.TEMPERATURE_SENSOR) {
+                    room.setTemperature(device.getCurrentValue());
+                } else if (device.getType() == DeviceType.HUMIDITY_SENSOR) {
+                    room.setHumidity(device.getCurrentValue());
+                }
+            }
+            
+            rooms.add(room);
+        }
+        return rooms;
+    }
+    
+    /**
+     * Convierte entidades de Device a modelos de Device
+     */
+    private List<Device> convertDeviceEntitiesToDevices(List<DeviceEntity> entities) {
+        List<Device> devices = new ArrayList<>();
+        for (DeviceEntity entity : entities) {
+            Device device = new Device(
+                entity.getDeviceId(),
+                entity.getName(),
+                convertStringToDeviceType(entity.getDeviceType()),
+                entity.getRoomId()
+            );
+            
+            device.setEnabled(entity.isOn());
+            device.setOnline(entity.isOnline());
+            device.setCurrentValue(entity.getIntensity());
+            
+            // Para sensores de temperatura
+            if (entity.getTemperature() != null) {
+                device.setCurrentValue(entity.getTemperature());
+            }
+            
+            devices.add(device);
+        }
+        return devices;
+    }
+    
+    /**
+     * Convierte string a RoomType
+     */
+    private RoomType convertStringToRoomType(String type) {
+        try {
+            return RoomType.valueOf(type);
+        } catch (Exception e) {
+            return RoomType.LIVING_ROOM; // Por defecto
+        }
+    }
+    
+    /**
+     * Convierte string a DeviceType
+     */
+    private DeviceType convertStringToDeviceType(String type) {
+        try {
+            return DeviceType.valueOf(type);
+        } catch (Exception e) {
+            return DeviceType.LIGHT_SWITCH; // Por defecto
+        }
+    }
+    
+    /**
+     * Método auxiliar para setMessage (compatibilidad)
+     */
+    private void setMessage(String message) {
+        _error.setValue(message);
+    }
+    
+    /**
+     * Método auxiliar para setLoading (compatibilidad)
+     */
+    private void setLoading(boolean loading) {
+        _isLoading.setValue(loading);
     }
 
     /**

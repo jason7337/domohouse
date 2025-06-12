@@ -61,9 +61,11 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.7.7'
     implementation 'androidx.navigation:navigation-ui:2.7.7'
     
-    // Room Database (para futuras sesiones)
+    // Room Database para persistencia offline
     implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
     annotationProcessor 'androidx.room:room-compiler:2.6.1'
+    testImplementation 'androidx.room:room-testing:2.6.1'
     
     // SharedPreferences cifradas (para PIN)
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
@@ -74,10 +76,18 @@ dependencies {
     // Firebase productos necesarios
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-database'
+    implementation 'com.google.firebase:firebase-storage'
     
     // Utilidades adicionales
     implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // CircleImageView para fotos de perfil
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    
+    // Glide para carga de imágenes
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
     
     // Para tests de Navigation
     androidTestImplementation 'androidx.navigation:navigation-testing:2.7.7'

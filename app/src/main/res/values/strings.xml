@@ -4,10 +4,13 @@
     <!-- Títulos de pantallas -->
     <string name="login_title">Iniciar Sesión</string>
     <string name="register_title">Registrarse</string>
-    <string name="home_title">Panel Principal</string>
+    <string name="home_title">Inicio</string>
     <string name="lights_title">Control de Luces</string>
     <string name="temperature_title">Temperatura</string>
     <string name="security_title">Seguridad</string>
+    <string name="profile_title">Perfil</string>
+    <string name="devices_title">Dispositivos</string>
+    <string name="settings_title">Configuración</string>
     
     <!-- Login y Registro -->
     <string name="email_hint">Correo electrónico</string>
@@ -45,6 +48,30 @@
     <string name="room_details">Detalles de Habitación</string>
     <string name="device_count">%d dispositivos</string>
     <string name="temperature_format">%.1f°C</string>
+    
+    <!-- Perfil -->
+    <string name="personal_information">Información Personal</string>
+    <string name="full_name">Nombre Completo</string>
+    <string name="email">Correo Electrónico</string>
+    <string name="save_changes">Guardar Cambios</string>
+    <string name="change_photo">Cambiar Foto</string>
+    <string name="change_pin">Cambiar PIN</string>
+    <string name="change_password">Cambiar Contraseña</string>
+    <string name="security">Seguridad</string>
+    <string name="preferences">Preferencias</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="automatic_mode">Modo Automático</string>
+    <string name="temperature_alerts">Alertas de Análisis</string>
+    <string name="logout">Cerrar Sesión</string>
+    
+    <!-- Cambio de PIN -->
+    <string name="change_pin_message">Ingresa tu PIN actual y el nuevo PIN de 4 dígitos</string>
+    <string name="current_pin">PIN Actual</string>
+    <string name="new_pin">Nuevo PIN</string>
+    <string name="confirm_new_pin">Confirmar Nuevo PIN</string>
+    
+    <!-- Navegación -->
+    <string name="menu">Menú</string>
     
     <!-- General -->
     <string name="loading">Cargando…</string>

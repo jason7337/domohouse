@@ -18,6 +18,14 @@ public abstract class BaseViewModel extends ViewModel {
     private final MutableLiveData<String> _errorMessage = new MutableLiveData<>();
     public LiveData<String> errorMessage = _errorMessage;
     
+    // LiveData para manejar mensajes informativos
+    private final MutableLiveData<String> _message = new MutableLiveData<>();
+    public LiveData<String> message = _message;
+    
+    // LiveData para errores simples
+    private final MutableLiveData<String> _error = new MutableLiveData<>();
+    public LiveData<String> error = _error;
+    
     /**
      * Constructor base
      */
@@ -38,7 +46,16 @@ public abstract class BaseViewModel extends ViewModel {
      * @param message El mensaje de error a mostrar
      */
     protected void setError(String message) {
+        _error.postValue(message);
         _errorMessage.postValue(message);
+    }
+    
+    /**
+     * Establece un mensaje informativo (thread-safe)
+     * @param message El mensaje informativo a mostrar
+     */
+    protected void setMessage(String message) {
+        _message.postValue(message);
     }
     
     /**

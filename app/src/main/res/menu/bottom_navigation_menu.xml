@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Home / Dashboard -->
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/home_title" />
+    
+    <!-- Dispositivos -->
+    <item
+        android:id="@+id/devicesFragment"
+        android:icon="@drawable/ic_devices"
+        android:title="@string/devices_title" />
+    
+    <!-- Perfil -->
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_person"
+        android:title="@string/profile_title" />
+    
+    <!-- Configuración -->
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/settings_title" />
+    
+</menu>

@@ -1,6 +1,7 @@
 package com.pdm.domohouse.ui.auth;
 
 import android.content.Context;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Patterns;
 
@@ -8,7 +9,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.auth.FirebaseUser;
+import com.pdm.domohouse.data.model.UserProfile;
 import com.pdm.domohouse.network.FirebaseAuthManager;
+import com.pdm.domohouse.network.FirebaseDataManager;
 import com.pdm.domohouse.ui.base.BaseViewModel;
 import com.pdm.domohouse.utils.SecurePreferencesManager;
 
@@ -18,8 +21,9 @@ import com.pdm.domohouse.utils.SecurePreferencesManager;
  */
 public class RegisterViewModel extends BaseViewModel {
     
-    // Managers para autenticación
+    // Managers para autenticación y datos
     private final FirebaseAuthManager firebaseAuthManager;
+    private final FirebaseDataManager firebaseDataManager;
     private SecurePreferencesManager securePreferencesManager;
     
     // Campos del formulario con Two-Way Data Binding
@@ -63,12 +67,31 @@ public class RegisterViewModel extends BaseViewModel {
     private final MutableLiveData<String> _confirmPinError = new MutableLiveData<>();
     public LiveData<String> confirmPinError = _confirmPinError;
     
+    // Campo para teléfono (opcional)
+    private final MutableLiveData<String> _phoneNumber = new MutableLiveData<>("");
+    public MutableLiveData<String> phoneNumber = _phoneNumber;
+    
+    // Foto de perfil
+    private final MutableLiveData<Uri> _profilePhotoUri = new MutableLiveData<>();
+    public LiveData<Uri> profilePhotoUri = _profilePhotoUri;
+    
+    private final MutableLiveData<String> _profilePhotoUrl = new MutableLiveData<>();
+    public LiveData<String> profilePhotoUrl = _profilePhotoUrl;
+    
+    // Estado de la subida de foto
+    private final MutableLiveData<Boolean> _isUploadingPhoto = new MutableLiveData<>(false);
+    public LiveData<Boolean> isUploadingPhoto = _isUploadingPhoto;
+    
+    private final MutableLiveData<Integer> _photoUploadProgress = new MutableLiveData<>(0);
+    public LiveData<Integer> photoUploadProgress = _photoUploadProgress;
+    
     /**
      * Constructor
      */
     public RegisterViewModel() {
         super();
         this.firebaseAuthManager = FirebaseAuthManager.getInstance();
+        this.firebaseDataManager = FirebaseDataManager.getInstance();
     }
     
     /**
@@ -92,6 +115,7 @@ public class RegisterViewModel extends BaseViewModel {
         String confirmPasswordValue = _confirmPassword.getValue();
         String pinValue = _pin.getValue();
         String confirmPinValue = _confirmPin.getValue();
+        String phoneValue = _phoneNumber.getValue();
         
         // Validar campos
         if (!validateForm(nameValue, emailValue, passwordValue, confirmPasswordValue, pinValue, confirmPinValue)) {
@@ -102,21 +126,23 @@ public class RegisterViewModel extends BaseViewModel {
         setLoading(true);
         
         // Registrar con Firebase
-        registerWithFirebase(emailValue, passwordValue, pinValue);
+        registerWithFirebase(nameValue, emailValue, passwordValue, pinValue, phoneValue);
     }
     
     /**
      * Registra al usuario con Firebase
+     * @param name Nombre del usuario
      * @param email Email del usuario
      * @param password Contraseña del usuario
      * @param pin PIN del usuario
+     * @param phoneNumber Teléfono del usuario (opcional)
      */
-    private void registerWithFirebase(String email, String password, String pin) {
+    private void registerWithFirebase(String name, String email, String password, String pin, String phoneNumber) {
         firebaseAuthManager.createUserWithEmailAndPassword(email, password, new FirebaseAuthManager.AuthCallback() {
             @Override
             public void onSuccess(FirebaseUser user) {
-                // Usuario registrado exitosamente, ahora guardar el PIN
-                savePinSecurely(pin);
+                // Usuario registrado exitosamente, crear perfil completo
+                createUserProfile(user, name, email, pin, phoneNumber);
             }
             
             @Override
@@ -129,7 +155,92 @@ public class RegisterViewModel extends BaseViewModel {
     }
     
     /**
-     * Guarda el PIN de forma segura
+     * Crea el perfil completo del usuario en Firebase
+     * @param user Usuario de Firebase
+     * @param name Nombre del usuario
+     * @param email Email del usuario
+     * @param pin PIN del usuario
+     * @param phoneNumber Teléfono del usuario
+     */
+    private void createUserProfile(FirebaseUser user, String name, String email, String pin, String phoneNumber) {
+        // Crear el perfil del usuario
+        UserProfile userProfile = new UserProfile(user.getUid(), name, email);
+        userProfile.setPhoneNumber(phoneNumber);
+        userProfile.updateLastLogin();
+        
+        // Si hay foto, subirla primero
+        Uri photoUri = _profilePhotoUri.getValue();
+        if (photoUri != null) {
+            uploadPhotoAndSaveProfile(userProfile, pin, photoUri);
+        } else {
+            saveUserProfileToFirebase(userProfile, pin);
+        }
+    }
+    
+    /**
+     * Sube la foto y luego guarda el perfil
+     * @param userProfile Perfil del usuario
+     * @param pin PIN del usuario
+     * @param photoUri URI de la foto
+     */
+    private void uploadPhotoAndSaveProfile(UserProfile userProfile, String pin, Uri photoUri) {
+        _isUploadingPhoto.setValue(true);
+        
+        firebaseDataManager.uploadProfilePhoto(userProfile.getUserId(), photoUri, new FirebaseDataManager.PhotoUploadCallback() {
+            @Override
+            public void onSuccess(String downloadUrl) {
+                _isUploadingPhoto.setValue(false);
+                userProfile.setProfilePhotoUrl(downloadUrl);
+                saveUserProfileToFirebase(userProfile, pin);
+            }
+            
+            @Override
+            public void onProgress(int progress) {
+                _photoUploadProgress.setValue(progress);
+            }
+            
+            @Override
+            public void onError(String error) {
+                _isUploadingPhoto.setValue(false);
+                // Continuar sin la foto si hay error
+                setError("No se pudo subir la foto, pero se creó tu cuenta");
+                saveUserProfileToFirebase(userProfile, pin);
+            }
+        });
+    }
+    
+    /**
+     * Guarda el perfil del usuario en Firebase y el PIN localmente
+     * @param userProfile Perfil del usuario
+     * @param pin PIN del usuario
+     */
+    private void saveUserProfileToFirebase(UserProfile userProfile, String pin) {
+        // Primero, cifrar y guardar el PIN como respaldo en el perfil
+        try {
+            String encryptedPin = securePreferencesManager.encryptPin(pin);
+            userProfile.setEncryptedPin(encryptedPin);
+        } catch (Exception e) {
+            // Continuar sin respaldo del PIN si hay error de cifrado
+        }
+        
+        // Guardar el perfil en Firebase
+        firebaseDataManager.saveUserProfile(userProfile, new FirebaseDataManager.DatabaseCallback() {
+            @Override
+            public void onSuccess() {
+                // Perfil guardado, ahora guardar PIN localmente
+                savePinSecurely(pin);
+            }
+            
+            @Override
+            public void onError(String error) {
+                setLoading(false);
+                setError("Error al crear perfil: " + error);
+            }
+        });
+    }
+    
+    /**
+     * Guarda el PIN de forma segura localmente
      * @param pin PIN del usuario
      */
     private void savePinSecurely(String pin) {
@@ -236,6 +347,22 @@ public class RegisterViewModel extends BaseViewModel {
         }
         
         return isValid;
+    }
+    
+    /**
+     * Establece la URI de la foto de perfil seleccionada
+     * @param uri URI de la imagen
+     */
+    public void setProfilePhotoUri(Uri uri) {
+        _profilePhotoUri.setValue(uri);
+    }
+    
+    /**
+     * Limpia la foto de perfil seleccionada
+     */
+    public void clearProfilePhoto() {
+        _profilePhotoUri.setValue(null);
+        _profilePhotoUrl.setValue(null);
     }
     
     /**

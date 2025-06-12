@@ -6,10 +6,11 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 /**
  * Actividad principal de la aplicación
- * Actúa como contenedor para el Navigation Component
+ * Actúa como contenedor para el Navigation Component y maneja la navegación principal
  */
 public class MainActivity extends AppCompatActivity {
     
@@ -18,6 +19,9 @@ public class MainActivity extends AppCompatActivity {
     
     // Configuración de la barra de aplicación
     private AppBarConfiguration appBarConfiguration;
+    
+    // BottomNavigationView para navegación principal
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
         
         // Configurar Navigation Component
         setupNavigation();
+        
+        // Configurar Bottom Navigation
+        setupBottomNavigation();
     }
     
     /**
@@ -45,12 +52,35 @@ public class MainActivity extends AppCompatActivity {
             appBarConfiguration = new AppBarConfiguration.Builder(
                     R.id.splashFragment,
                     R.id.loginFragment,
-                    R.id.homeFragment
+                    R.id.homeFragment,
+                    R.id.profileFragment,
+                    R.id.devicesFragment,
+                    R.id.settingsFragment
             ).build();
             
-            // Por ahora, no configurar ActionBar ya que las pantallas son full screen
-            // TODO: Configurar ActionBar cuando sea necesario en futuras sesiones
-            // NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            // Listener para mostrar/ocultar bottom navigation según el destino
+            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+                // Mostrar bottom navigation solo en fragmentos principales
+                boolean showBottomNav = destination.getId() == R.id.homeFragment ||
+                                      destination.getId() == R.id.profileFragment ||
+                                      destination.getId() == R.id.devicesFragment ||
+                                      destination.getId() == R.id.settingsFragment;
+                
+                bottomNavigationView.setVisibility(showBottomNav ? 
+                    BottomNavigationView.VISIBLE : BottomNavigationView.GONE);
+            });
+        }
+    }
+    
+    /**
+     * Configura el BottomNavigationView
+     */
+    private void setupBottomNavigation() {
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        
+        if (bottomNavigationView != null && navController != null) {
+            // Conectar el BottomNavigationView con el NavController
+            NavigationUI.setupWithNavController(bottomNavigationView, navController);
         }
     }
     

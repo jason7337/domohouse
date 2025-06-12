@@ -35,12 +35,26 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <!-- Botón de menú -->
+            <ImageButton
+                android:id="@+id/menuButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/menu"
+                android:padding="8dp"
+                android:src="@drawable/ic_menu"
+                app:layout_constraintBottom_toBottomOf="@+id/welcomeTextView"
+                app:layout_constraintEnd_toStartOf="@+id/refreshButton"
+                app:layout_constraintTop_toTopOf="@+id/welcomeTextView"
+                app:tint="@color/primary" />
+
             <!-- Botón de actualizar -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/refreshButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:backgroundTint="@color/primary"
                 android:contentDescription="@string/refresh_data"
                 android:src="@android:drawable/ic_menu_rotate"
