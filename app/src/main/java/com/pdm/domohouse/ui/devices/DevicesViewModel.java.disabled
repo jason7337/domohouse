@@ -1,0 +1,347 @@
+package com.pdm.domohouse.ui.devices;
+
+import android.app.Application;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+
+import com.pdm.domohouse.data.database.AppDatabase;
+import com.pdm.domohouse.data.database.dao.DeviceDao;
+import com.pdm.domohouse.data.database.dao.RoomDao;
+import com.pdm.domohouse.data.database.entity.DeviceEntity;
+import com.pdm.domohouse.data.database.entity.RoomEntity;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.data.model.DeviceType;
+import com.pdm.domohouse.data.model.Room;
+import com.pdm.domohouse.network.FirebaseDataManager;
+import com.pdm.domohouse.utils.DeviceMapper;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/**
+ * ViewModel para la gestión de dispositivos
+ * Maneja la lógica de negocio, sincronización y estados de UI
+ */
+public class DevicesViewModel extends AndroidViewModel {
+    
+    private static final String TAG = "DevicesViewModel";
+    
+    // Ejecutor para operaciones en background
+    private final ExecutorService executor = Executors.newFixedThreadPool(3);
+    
+    // DAOs para acceso a datos
+    private final DeviceDao deviceDao;
+    private final RoomDao roomDao;
+    
+    // Manager para Firebase
+    private final FirebaseDataManager firebaseManager;
+    
+    // LiveData para UI
+    private final MutableLiveData<List<RoomWithDevices>> roomsWithDevices = new MutableLiveData<>();
+    private final LiveData<List<DeviceEntity>> allDevices;
+    private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<SyncStatus> syncStatus = new MutableLiveData<>(SyncStatus.SYNCED);
+    private final MutableLiveData<DeviceStats> deviceStats = new MutableLiveData<>();
+
+    /**
+     * Constructor del ViewModel
+     */
+    public DevicesViewModel(@NonNull Application application) {
+        super(application);
+        
+        AppDatabase database = AppDatabase.getInstance(application);
+        deviceDao = database.deviceDao();
+        roomDao = database.roomDao();
+        
+        firebaseManager = FirebaseDataManager.getInstance();
+        
+        // Obtener todos los dispositivos de la base de datos
+        allDevices = deviceDao.getAllDevices();
+        
+        // Configurar observadores para actualizar automáticamente los datos
+        setupDataObservers();
+    }
+
+    /**
+     * Configura los observadores para actualizar datos automáticamente
+     */
+    private void setupDataObservers() {
+        // Observer para actualizar estadísticas cuando cambien los dispositivos
+        allDevices.observeForever(devices -> {
+            if (devices != null) {
+                updateDeviceStats(devices);
+                loadRoomsWithDevices();
+            }
+        });
+    }
+
+    /**
+     * Carga los dispositivos desde la base de datos
+     */
+    public void loadDevices() {
+        isLoading.setValue(true);
+        
+        executor.execute(() -> {
+            try {
+                // Los datos se cargan automáticamente por el LiveData
+                loadRoomsWithDevices();
+                
+                // Intentar sincronizar con Firebase
+                syncWithFirebase();
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando dispositivos: " + e.getMessage());
+                error.postValue("Error cargando dispositivos: " + e.getMessage());
+            } finally {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    /**
+     * Refresca los dispositivos desde Firebase
+     */
+    public void refreshDevices() {
+        isLoading.setValue(true);
+        syncStatus.setValue(SyncStatus.SYNCING);
+        
+        executor.execute(() -> {
+            try {
+                // Sincronizar con Firebase
+                syncWithFirebase();
+                
+                syncStatus.postValue(SyncStatus.SYNCED);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error refrescando dispositivos: " + e.getMessage());
+                error.postValue("Error al sincronizar: " + e.getMessage());
+                syncStatus.postValue(SyncStatus.ERROR);
+            } finally {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    /**
+     * Carga las habitaciones con sus dispositivos
+     */
+    private void loadRoomsWithDevices() {
+        executor.execute(() -> {
+            try {
+                List<RoomEntity> rooms = roomDao.getAllRoomsSync();
+                List<RoomWithDevices> result = new ArrayList<>();
+                
+                for (RoomEntity roomEntity : rooms) {
+                    List<DeviceEntity> deviceEntities = deviceDao.getDevicesByRoomSync(roomEntity.getRoomId());
+                    
+                    if (!deviceEntities.isEmpty()) {
+                        List<Device> devices = new ArrayList<>();
+                        for (DeviceEntity entity : deviceEntities) {
+                            devices.add(DeviceMapper.entityToModel(entity));
+                        }
+                        
+                        Room room = new Room(
+                            roomEntity.getRoomId(),
+                            roomEntity.getName(),
+                            roomEntity.getRoomType(),
+                            roomEntity.getFloor()
+                        );
+                        
+                        result.add(new RoomWithDevices(room, devices));
+                    }
+                }
+                
+                roomsWithDevices.postValue(result);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando habitaciones con dispositivos: " + e.getMessage());
+                error.postValue("Error cargando habitaciones");
+            }
+        });
+    }
+
+    /**
+     * Sincroniza con Firebase
+     */
+    private void syncWithFirebase() {
+        // TODO: Implementar sincronización bidireccional con Firebase
+        // Para esta sesión, implementamos la estructura base
+        Log.d(TAG, "Sincronización con Firebase - pendiente de implementar");
+    }
+
+    /**
+     * Cambia el estado de un dispositivo
+     */
+    public void toggleDevice(String deviceId, boolean newState) {
+        executor.execute(() -> {
+            try {
+                long timestamp = System.currentTimeMillis();
+                deviceDao.updateDeviceState(deviceId, newState, timestamp);
+                
+                // TODO: Enviar comando al dispositivo real a través de Firebase
+                Log.d(TAG, "Dispositivo " + deviceId + " cambiado a: " + newState);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error cambiando estado del dispositivo: " + e.getMessage());
+                error.postValue("Error cambiando estado del dispositivo");
+            }
+        });
+    }
+
+    /**
+     * Elimina un dispositivo
+     */
+    public void deleteDevice(String deviceId) {
+        executor.execute(() -> {
+            try {
+                DeviceEntity device = deviceDao.getDeviceSync(deviceId);
+                if (device != null) {
+                    deviceDao.delete(device);
+                    
+                    // TODO: Eliminar de Firebase también
+                    Log.d(TAG, "Dispositivo eliminado: " + deviceId);
+                }
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error eliminando dispositivo: " + e.getMessage());
+                error.postValue("Error eliminando dispositivo");
+            }
+        });
+    }
+
+    /**
+     * Duplica un dispositivo
+     */
+    public void duplicateDevice(Device originalDevice) {
+        executor.execute(() -> {
+            try {
+                // Crear nuevo dispositivo basado en el original
+                String newId = UUID.randomUUID().toString();
+                String newName = originalDevice.getName() + " (Copia)";
+                
+                Device newDevice = new Device(newId, newName, originalDevice.getType(), originalDevice.getRoomId());
+                newDevice.setMinValue(originalDevice.getMinValue());
+                newDevice.setMaxValue(originalDevice.getMaxValue());
+                newDevice.setUnit(originalDevice.getUnit());
+                
+                DeviceEntity entity = DeviceMapper.modelToEntity(newDevice);
+                deviceDao.insert(entity);
+                
+                Log.d(TAG, "Dispositivo duplicado: " + newName);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error duplicando dispositivo: " + e.getMessage());
+                error.postValue("Error duplicando dispositivo");
+            }
+        });
+    }
+
+    /**
+     * Actualiza las estadísticas de dispositivos
+     */
+    private void updateDeviceStats(List<DeviceEntity> devices) {
+        executor.execute(() -> {
+            int totalDevices = devices.size();
+            int activeDevices = 0;
+            int offlineDevices = 0;
+            
+            for (DeviceEntity device : devices) {
+                if (device.isOn()) {
+                    activeDevices++;
+                }
+                if (!device.isOnline()) {
+                    offlineDevices++;
+                }
+            }
+            
+            DeviceStats stats = new DeviceStats(totalDevices, activeDevices, offlineDevices);
+            deviceStats.postValue(stats);
+        });
+    }
+
+    // Getters para LiveData
+    
+    public LiveData<List<RoomWithDevices>> getRoomsWithDevices() {
+        return roomsWithDevices;
+    }
+
+    public LiveData<List<DeviceEntity>> getAllDevices() {
+        return allDevices;
+    }
+
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
+    }
+
+    public LiveData<String> getError() {
+        return error;
+    }
+
+    public LiveData<SyncStatus> getSyncStatus() {
+        return syncStatus;
+    }
+
+    public LiveData<DeviceStats> getDeviceStats() {
+        return deviceStats;
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdown();
+    }
+
+    // Clases de datos para la UI
+
+    /**
+     * Clase que representa una habitación con sus dispositivos
+     */
+    public static class RoomWithDevices {
+        private final Room room;
+        private final List<Device> devices;
+
+        public RoomWithDevices(Room room, List<Device> devices) {
+            this.room = room;
+            this.devices = devices;
+        }
+
+        public Room getRoom() { return room; }
+        public List<Device> getDevices() { return devices; }
+    }
+
+    /**
+     * Estadísticas de dispositivos
+     */
+    public static class DeviceStats {
+        public final int totalDevices;
+        public final int activeDevices;
+        public final int offlineDevices;
+
+        public DeviceStats(int totalDevices, int activeDevices, int offlineDevices) {
+            this.totalDevices = totalDevices;
+            this.activeDevices = activeDevices;
+            this.offlineDevices = offlineDevices;
+        }
+    }
+
+    /**
+     * Estados de sincronización
+     */
+    public enum SyncStatus {
+        SYNCED,    // Sincronizado correctamente
+        SYNCING,   // Sincronizando
+        ERROR,     // Error en sincronización
+        OFFLINE    // Sin conexión
+    }
+}

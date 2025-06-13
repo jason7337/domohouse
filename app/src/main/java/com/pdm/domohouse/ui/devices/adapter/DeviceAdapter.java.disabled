@@ -1,0 +1,377 @@
+package com.pdm.domohouse.ui.devices.adapter;
+
+import android.content.res.ColorStateList;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.pdm.domohouse.R;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.data.model.DeviceType;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+/**
+ * Adaptador para mostrar dispositivos individuales
+ * Soporta diferentes tipos de dispositivos con controles específicos
+ */
+public class DeviceAdapter extends ListAdapter<Device, DeviceAdapter.DeviceViewHolder> {
+    
+    // Interfaces para callbacks
+    public interface OnDeviceClickListener {
+        void onDeviceClick(Device device);
+    }
+    
+    public interface OnDeviceToggleListener {
+        void onDeviceToggle(Device device, boolean newState);
+    }
+    
+    public interface OnDeviceLongClickListener {
+        void onDeviceLongClick(Device device);
+    }
+    
+    private final OnDeviceClickListener clickListener;
+    private final OnDeviceToggleListener toggleListener;
+    private final OnDeviceLongClickListener longClickListener;
+
+    /**
+     * Constructor del adaptador
+     */
+    public DeviceAdapter(OnDeviceClickListener clickListener,
+                        OnDeviceToggleListener toggleListener,
+                        OnDeviceLongClickListener longClickListener) {
+        super(DIFF_CALLBACK);
+        this.clickListener = clickListener;
+        this.toggleListener = toggleListener;
+        this.longClickListener = longClickListener;
+    }
+
+    @NonNull
+    @Override
+    public DeviceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_device, parent, false);
+        return new DeviceViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DeviceViewHolder holder, int position) {
+        Device device = getItem(position);
+        holder.bind(device);
+    }
+
+    /**
+     * ViewHolder para cada dispositivo
+     */
+    public class DeviceViewHolder extends RecyclerView.ViewHolder {
+        
+        private final CardView cardView;
+        private final ImageView deviceIcon;
+        private final TextView deviceName;
+        private final TextView deviceStatus;
+        private final TextView deviceValue;
+        private final Switch deviceSwitch;
+        private final ProgressBar valueProgress;
+        private final View connectionIndicator;
+        private final TextView lastUpdated;
+        private final ImageView batteryIcon;
+
+        public DeviceViewHolder(@NonNull View itemView) {
+            super(itemView);
+            
+            cardView = itemView.findViewById(R.id.card_device);
+            deviceIcon = itemView.findViewById(R.id.icon_device);
+            deviceName = itemView.findViewById(R.id.text_device_name);
+            deviceStatus = itemView.findViewById(R.id.text_device_status);
+            deviceValue = itemView.findViewById(R.id.text_device_value);
+            deviceSwitch = itemView.findViewById(R.id.switch_device);
+            valueProgress = itemView.findViewById(R.id.progress_value);
+            connectionIndicator = itemView.findViewById(R.id.indicator_connection);
+            lastUpdated = itemView.findViewById(R.id.text_last_updated);
+            batteryIcon = itemView.findViewById(R.id.icon_battery);
+        }
+
+        /**
+         * Vincula los datos del dispositivo con las vistas
+         */
+        public void bind(Device device) {
+            // Configurar nombre y icono del dispositivo
+            deviceName.setText(device.getName());
+            deviceIcon.setImageResource(getDeviceIcon(device.getType()));
+            
+            // Configurar switch y su listener
+            deviceSwitch.setOnCheckedChangeListener(null); // Evitar llamadas no deseadas
+            deviceSwitch.setChecked(device.isEnabled());
+            deviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (toggleListener != null) {
+                    toggleListener.onDeviceToggle(device, isChecked);
+                }
+            });
+            
+            // Configurar estado del dispositivo
+            updateDeviceStatus(device);
+            
+            // Configurar valor y progreso
+            updateDeviceValue(device);
+            
+            // Configurar indicador de conexión
+            updateConnectionIndicator(device);
+            
+            // Configurar batería (solo para dispositivos inalámbricos)
+            updateBatteryIndicator(device);
+            
+            // Configurar timestamp de última actualización
+            updateLastUpdatedTime(device);
+            
+            // Configurar color de la tarjeta según el estado
+            updateCardAppearance(device);
+            
+            // Configurar listeners de click
+            setupClickListeners(device);
+        }
+
+        /**
+         * Actualiza el estado visual del dispositivo
+         */
+        private void updateDeviceStatus(Device device) {
+            if (!device.isConnected()) {
+                deviceStatus.setText(R.string.device_offline);
+                deviceStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.error));
+            } else if (device.needsAttention()) {
+                deviceStatus.setText(R.string.device_needs_attention);
+                deviceStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.warning));
+            } else if (device.isEnabled()) {
+                deviceStatus.setText(R.string.device_active);
+                deviceStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.success));
+            } else {
+                deviceStatus.setText(R.string.device_inactive);
+                deviceStatus.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.text_secondary));
+            }
+        }
+
+        /**
+         * Actualiza el valor y progreso del dispositivo
+         */
+        private void updateDeviceValue(Device device) {
+            deviceValue.setText(device.getFormattedValue());
+            
+            // Mostrar barra de progreso solo para dispositivos con valores variables
+            if (device.getType().hasVariableValue()) {
+                valueProgress.setVisibility(View.VISIBLE);
+                valueProgress.setProgress(device.getValuePercentage());
+                
+                // Configurar color del progreso según el tipo de dispositivo
+                int progressColor = getProgressColor(device);
+                valueProgress.setProgressTintList(ColorStateList.valueOf(progressColor));
+            } else {
+                valueProgress.setVisibility(View.GONE);
+            }
+        }
+
+        /**
+         * Actualiza el indicador de conexión
+         */
+        private void updateConnectionIndicator(Device device) {
+            if (device.isConnected()) {
+                int signalStrength = device.getSignalStrength();
+                if (signalStrength > 70) {
+                    connectionIndicator.setBackgroundTintList(
+                        ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), R.color.success))
+                    );
+                } else if (signalStrength > 30) {
+                    connectionIndicator.setBackgroundTintList(
+                        ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), R.color.warning))
+                    );
+                } else {
+                    connectionIndicator.setBackgroundTintList(
+                        ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), R.color.error))
+                    );
+                }
+            } else {
+                connectionIndicator.setBackgroundTintList(
+                    ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), R.color.text_secondary))
+                );
+            }
+        }
+
+        /**
+         * Actualiza el indicador de batería
+         */
+        private void updateBatteryIndicator(Device device) {
+            int batteryLevel = device.getBatteryLevel();
+            
+            if (batteryLevel < 100) { // Solo mostrar si no está al 100%
+                batteryIcon.setVisibility(View.VISIBLE);
+                
+                if (batteryLevel > 50) {
+                    batteryIcon.setImageResource(R.drawable.ic_battery_full);
+                    batteryIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), R.color.success));
+                } else if (batteryLevel > 20) {
+                    batteryIcon.setImageResource(R.drawable.ic_battery_half);
+                    batteryIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), R.color.warning));
+                } else {
+                    batteryIcon.setImageResource(R.drawable.ic_battery_low);
+                    batteryIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), R.color.error));
+                }
+            } else {
+                batteryIcon.setVisibility(View.GONE);
+            }
+        }
+
+        /**
+         * Actualiza el tiempo de última actualización
+         */
+        private void updateLastUpdatedTime(Device device) {
+            long minutesAgo = device.getMinutesSinceLastUpdate();
+            
+            String timeText;
+            if (minutesAgo < 1) {
+                timeText = itemView.getContext().getString(R.string.just_now);
+            } else if (minutesAgo < 60) {
+                timeText = itemView.getContext().getString(R.string.minutes_ago, minutesAgo);
+            } else {
+                SimpleDateFormat formatter = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                timeText = formatter.format(new Date(device.getLastUpdated()));
+            }
+            
+            lastUpdated.setText(timeText);
+        }
+
+        /**
+         * Actualiza la apariencia de la tarjeta según el estado
+         */
+        private void updateCardAppearance(Device device) {
+            if (!device.isConnected()) {
+                // Dispositivo desconectado
+                cardView.setCardBackgroundColor(
+                    ContextCompat.getColor(itemView.getContext(), R.color.surface_variant)
+                );
+                cardView.setAlpha(0.6f);
+            } else if (device.isEnabled()) {
+                // Dispositivo activo
+                cardView.setCardBackgroundColor(
+                    ContextCompat.getColor(itemView.getContext(), R.color.primary_light)
+                );
+                cardView.setAlpha(1.0f);
+            } else {
+                // Dispositivo inactivo pero conectado
+                cardView.setCardBackgroundColor(
+                    ContextCompat.getColor(itemView.getContext(), R.color.surface)
+                );
+                cardView.setAlpha(1.0f);
+            }
+        }
+
+        /**
+         * Configura los listeners de click
+         */
+        private void setupClickListeners(Device device) {
+            // Click normal para abrir configuración
+            itemView.setOnClickListener(v -> {
+                if (clickListener != null) {
+                    clickListener.onDeviceClick(device);
+                }
+            });
+            
+            // Click largo para opciones
+            itemView.setOnLongClickListener(v -> {
+                if (longClickListener != null) {
+                    longClickListener.onDeviceLongClick(device);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        /**
+         * Obtiene el icono apropiado para el tipo de dispositivo
+         */
+        private int getDeviceIcon(DeviceType deviceType) {
+            switch (deviceType) {
+                case LIGHT_SWITCH:
+                    return R.drawable.ic_lightbulb;
+                case LIGHT_DIMMER:
+                    return R.drawable.ic_brightness;
+                case FAN_SWITCH:
+                    return R.drawable.ic_fan;
+                case FAN_SPEED:
+                    return R.drawable.ic_fan_speed;
+                case TEMPERATURE_SENSOR:
+                    return R.drawable.ic_thermometer;
+                case HUMIDITY_SENSOR:
+                    return R.drawable.ic_humidity;
+                case MOTION_SENSOR:
+                    return R.drawable.ic_motion;
+                case DOOR_SENSOR:
+                    return R.drawable.ic_door;
+                case WINDOW_SENSOR:
+                    return R.drawable.ic_window;
+                case SMOKE_DETECTOR:
+                    return R.drawable.ic_smoke;
+                case SMART_LOCK:
+                    return R.drawable.ic_lock;
+                case CAMERA:
+                    return R.drawable.ic_camera;
+                case ALARM:
+                    return R.drawable.ic_alarm;
+                default:
+                    return R.drawable.ic_device_unknown;
+            }
+        }
+
+        /**
+         * Obtiene el color del progreso según el tipo de dispositivo
+         */
+        private int getProgressColor(Device device) {
+            switch (device.getType()) {
+                case LIGHT_DIMMER:
+                case LIGHT_SWITCH:
+                    return ContextCompat.getColor(itemView.getContext(), R.color.warning);
+                case FAN_SPEED:
+                case FAN_SWITCH:
+                    return ContextCompat.getColor(itemView.getContext(), R.color.primary);
+                case TEMPERATURE_SENSOR:
+                    return ContextCompat.getColor(itemView.getContext(), R.color.error);
+                case HUMIDITY_SENSOR:
+                    return ContextCompat.getColor(itemView.getContext(), R.color.success);
+                default:
+                    return ContextCompat.getColor(itemView.getContext(), R.color.primary);
+            }
+        }
+    }
+
+    /**
+     * DiffUtil callback para optimizar actualizaciones de la lista
+     */
+    private static final DiffUtil.ItemCallback<Device> DIFF_CALLBACK = 
+            new DiffUtil.ItemCallback<Device>() {
+        
+        @Override
+        public boolean areItemsTheSame(@NonNull Device oldItem, @NonNull Device newItem) {
+            return oldItem.getId().equals(newItem.getId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Device oldItem, @NonNull Device newItem) {
+            return oldItem.isEnabled() == newItem.isEnabled() &&
+                   oldItem.isConnected() == newItem.isConnected() &&
+                   Float.compare(oldItem.getCurrentValue(), newItem.getCurrentValue()) == 0 &&
+                   oldItem.getBatteryLevel() == newItem.getBatteryLevel() &&
+                   oldItem.getSignalStrength() == newItem.getSignalStrength() &&
+                   oldItem.getLastUpdated() == newItem.getLastUpdated();
+        }
+    };
+}

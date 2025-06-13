@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="device"
+            type="com.pdm.domohouse.data.model.Device" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <!-- Icono del dispositivo -->
+        <ImageView
+            android:id="@+id/imageDeviceIcon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="12dp"
+            android:padding="6dp"
+            android:background="@drawable/circle"
+            android:backgroundTint="@{device.enabled ? @color/primary_light : @color/surface}"
+            android:src="@drawable/ic_lightbulb"
+            android:contentDescription="@string/device_icon" />
+
+        <!-- Información del dispositivo -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Nombre del dispositivo -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{device.name}"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Lámpara Principal" />
+
+            <!-- Estado y tipo del dispositivo -->
+            <TextView
+                android:id="@+id/textDeviceStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Desconectado" />
+
+            <!-- Valor actual del dispositivo -->
+            <TextView
+                android:id="@+id/textCurrentValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                tools:text="75%" />
+        </LinearLayout>
+
+        <!-- Controles del dispositivo -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <!-- Switch para encender/apagar -->
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchDevice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="@{device.enabled}"
+                android:enabled="@{device.connected}"
+                app:thumbTint="@color/primary"
+                app:trackTint="@color/surface" />
+
+            <!-- Control de intensidad -->
+            <LinearLayout
+                android:id="@+id/layoutIntensityControl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:visibility="@{device.type.hasRange() ? android.view.View.VISIBLE : android.view.View.GONE}"
+                tools:visibility="visible">
+
+                <!-- SeekBar para intensidad -->
+                <SeekBar
+                    android:id="@+id/seekBarIntensity"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:progress="@{(int) device.valuePercentage}"
+                    android:enabled="@{device.enabled &amp;&amp; device.connected}"
+                    android:progressTint="@color/primary"
+                    android:thumbTint="@color/primary"
+                    android:progressBackgroundTint="@color/surface"
+                    tools:progress="75" />
+
+                <!-- Texto del porcentaje de intensidad -->
+                <TextView
+                    android:id="@+id/textIntensityValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@{String.format(&quot;%d%%&quot;, (int) device.valuePercentage)}"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp"
+                    tools:text="75%" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</layout>

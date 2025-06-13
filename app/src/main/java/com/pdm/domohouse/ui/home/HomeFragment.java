@@ -127,6 +127,19 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         
         // Botón de menú contextual
         binding.menuButton.setOnClickListener(v -> showPopupMenu(v));
+        
+        // Click en estadística de temperatura para navegar a pantalla de temperatura
+        binding.avgTemperatureValue.setOnClickListener(v -> {
+            Navigation.findNavController(binding.getRoot())
+                .navigate(R.id.action_home_to_temperature);
+        });
+        
+        // También permitir navegación desde toda la tarjeta de estadísticas (click largo)
+        binding.statsCard.setOnLongClickListener(v -> {
+            // Mostrar opciones de navegación rápida
+            showQuickNavigationMenu(v);
+            return true;
+        });
     }
     
     /**
@@ -153,8 +166,8 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
             return true;
         } else if (itemId == R.id.menu_settings) {
             // Navegar a configuración
-            Navigation.findNavController(binding.getRoot())
-                .navigate(R.id.action_home_to_settings);
+            // Navigation.findNavController(binding.getRoot())
+            //     .navigate(R.id.action_home_to_settings); // TODO: Fix navigation
             return true;
         } else if (itemId == R.id.menu_logout) {
             // Mostrar confirmación de cierre de sesión
@@ -181,6 +194,44 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
             })
             .setNegativeButton("Cancelar", null)
             .show();
+    }
+    
+    /**
+     * Muestra el menú de navegación rápida
+     */
+    private void showQuickNavigationMenu(View anchor) {
+        PopupMenu popup = new PopupMenu(getContext(), anchor);
+        
+        // Agregar opciones de navegación manualmente
+        popup.getMenu().add(0, 1, 0, "🌡️ Control de Temperatura");
+        popup.getMenu().add(0, 2, 0, "💡 Control de Luces");
+        popup.getMenu().add(0, 3, 0, "🔒 Seguridad");
+        popup.getMenu().add(0, 4, 0, "📱 Gestión de Dispositivos");
+        
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1: // Temperatura
+                    Navigation.findNavController(binding.getRoot())
+                        .navigate(R.id.action_home_to_temperature);
+                    return true;
+                case 2: // Luces
+                    Navigation.findNavController(binding.getRoot())
+                        .navigate(R.id.action_home_to_lights);
+                    return true;
+                case 3: // Seguridad
+                    Navigation.findNavController(binding.getRoot())
+                        .navigate(R.id.action_home_to_security);
+                    return true;
+                case 4: // Dispositivos
+                    Navigation.findNavController(binding.getRoot())
+                        .navigate(R.id.action_home_to_devices);
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        
+        popup.show();
     }
 
     /**

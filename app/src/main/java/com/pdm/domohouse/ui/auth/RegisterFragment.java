@@ -61,11 +61,8 @@ public class RegisterFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        // Inicializar ViewModel
-        viewModel = new ViewModelProvider(this).get(RegisterViewModel.class);
-        
-        // Inicializar preferencias seguras
-        viewModel.initializeSecurePreferences(requireContext());
+        // Inicializar ViewModel con Factory para AndroidViewModel
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(RegisterViewModel.class);
         
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(getViewLifecycleOwner());

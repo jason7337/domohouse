@@ -1,0 +1,324 @@
+package com.pdm.domohouse.ui.devices;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.pdm.domohouse.R;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.data.model.Room;
+import com.pdm.domohouse.databinding.FragmentDevicesBinding;
+import com.pdm.domohouse.ui.devices.adapter.DeviceAdapter;
+import com.pdm.domohouse.ui.devices.adapter.RoomDevicesAdapter;
+
+/**
+ * Fragment que muestra la gestión de dispositivos IoT
+ * Permite ver, agregar, editar y eliminar dispositivos por habitación
+ */
+public class DevicesFragment extends Fragment {
+    
+    private static final String TAG = "DevicesFragment";
+    
+    private FragmentDevicesBinding binding;
+    private DevicesViewModel viewModel;
+    private RoomDevicesAdapter roomAdapter;
+    private DeviceAdapter deviceAdapter;
+    private boolean isGridMode = false;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentDevicesBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        // Inicializar ViewModel
+        viewModel = new ViewModelProvider(this).get(DevicesViewModel.class);
+        
+        // Configurar UI
+        setupToolbar();
+        setupRecyclerView();
+        setupFab();
+        setupObservers();
+        // setupSwipeRefresh(); // Removido temporalmente
+        
+        // Cargar datos iniciales
+        viewModel.loadDevices();
+    }
+
+    /**
+     * Configura la toolbar con opciones de vista
+     */
+    private void setupToolbar() {
+        binding.toolbar.setTitle(R.string.devices_title);
+        binding.toolbar.setNavigationOnClickListener(v -> 
+            Navigation.findNavController(v).navigateUp());
+        
+        // Configurar menú para cambiar vista
+        binding.toolbar.inflateMenu(R.menu.menu_devices);
+        binding.toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_toggle_view) {
+                toggleViewMode();
+                return true;
+            } else if (item.getItemId() == R.id.action_refresh) {
+                viewModel.refreshDevices();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Configura el RecyclerView para mostrar dispositivos
+     */
+    private void setupRecyclerView() {
+        // Configurar adaptador por habitaciones (vista por defecto)
+        roomAdapter = new RoomDevicesAdapter(
+            this::onDeviceClick,
+            this::onDeviceToggle,
+            this::onDeviceLongClick
+        );
+        
+        binding.recyclerDevices.setAdapter(roomAdapter);
+        binding.recyclerDevices.setLayoutManager(new LinearLayoutManager(requireContext()));
+        
+        // Configurar adaptador de dispositivos individuales
+        deviceAdapter = new DeviceAdapter(
+            this::onDeviceClick,
+            this::onDeviceToggle,
+            this::onDeviceLongClick
+        );
+    }
+
+    /**
+     * Configura el FAB para agregar dispositivos
+     */
+    private void setupFab() {
+        binding.fabAddDevice.setOnClickListener(v -> {
+            // Navegar al wizard de configuración
+            Navigation.findNavController(v).navigate(
+                R.id.action_devices_to_add_device
+            );
+        });
+    }
+
+    /**
+     * Configura los observers del ViewModel
+     */
+    private void setupObservers() {
+        // Observer para habitaciones con dispositivos
+        viewModel.getRoomsWithDevices().observe(getViewLifecycleOwner(), roomsWithDevices -> {
+            if (roomsWithDevices != null) {
+                roomAdapter.submitList(roomsWithDevices);
+                updateEmptyState(roomsWithDevices.isEmpty());
+            }
+        });
+        
+        // Observer para todos los dispositivos (vista de grid)
+        viewModel.getAllDevices().observe(getViewLifecycleOwner(), devices -> {
+            if (devices != null) {
+                deviceAdapter.submitList(devices);
+            }
+        });
+        
+        // Observer para estado de carga
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            if (isLoading) {
+                binding.progressBar.setVisibility(View.VISIBLE);
+            } else {
+                binding.progressBar.setVisibility(View.GONE);
+            }
+        });
+        
+        // Observer para errores
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+            }
+        });
+        
+        // Observer para estado de sincronización
+        viewModel.getSyncStatus().observe(getViewLifecycleOwner(), syncStatus -> {
+            updateSyncIndicator(syncStatus);
+        });
+        
+        // Observer para estadísticas
+        viewModel.getDeviceStats().observe(getViewLifecycleOwner(), stats -> {
+            if (stats != null) {
+                updateStatsCards(stats);
+            }
+        });
+    }
+
+    /**
+     * Configura el SwipeRefreshLayout
+     */
+    /*
+    private void setupSwipeRefresh() {
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            viewModel.refreshDevices();
+        });
+        
+        // Aplicar colores del tema
+        binding.swipeRefresh.setColorSchemeResources(
+            R.color.primary,
+            R.color.primary_dark,
+            R.color.success
+        );
+    }
+    */
+
+    /**
+     * Cambia entre vista por habitaciones y vista de grid
+     */
+    private void toggleViewMode() {
+        isGridMode = !isGridMode;
+        
+        if (isGridMode) {
+            // Cambiar a vista de grid
+            binding.recyclerDevices.setLayoutManager(
+                new GridLayoutManager(requireContext(), 2)
+            );
+            binding.recyclerDevices.setAdapter(deviceAdapter);
+            
+            // Actualizar icono del menú
+            binding.toolbar.getMenu().findItem(R.id.action_toggle_view)
+                .setIcon(R.drawable.ic_view_list);
+        } else {
+            // Cambiar a vista por habitaciones
+            binding.recyclerDevices.setLayoutManager(
+                new LinearLayoutManager(requireContext())
+            );
+            binding.recyclerDevices.setAdapter(roomAdapter);
+            
+            // Actualizar icono del menú
+            binding.toolbar.getMenu().findItem(R.id.action_toggle_view)
+                .setIcon(R.drawable.ic_view_grid);
+        }
+    }
+
+    /**
+     * Maneja el click en un dispositivo
+     */
+    private void onDeviceClick(Device device) {
+        // Navegar a configuración del dispositivo
+        Bundle args = new Bundle();
+        args.putString("deviceId", device.getId());
+        
+        Navigation.findNavController(requireView()).navigate(
+            R.id.action_devices_to_device_config, args
+        );
+    }
+
+    /**
+     * Maneja el toggle del estado de un dispositivo
+     */
+    private void onDeviceToggle(Device device, boolean newState) {
+        viewModel.toggleDevice(device.getId(), newState);
+    }
+
+    /**
+     * Maneja el click largo en un dispositivo (opciones)
+     */
+    private void onDeviceLongClick(Device device) {
+        DeviceOptionsBottomSheet bottomSheet = DeviceOptionsBottomSheet.newInstance(device);
+        bottomSheet.setDeviceOptionsListener(new DeviceOptionsBottomSheet.DeviceOptionsListener() {
+            @Override
+            public void onEditDevice(Device device) {
+                // Navegar a edición
+                Bundle args = new Bundle();
+                args.putString("deviceId", device.getId());
+                args.putBoolean("isEditing", true);
+                
+                Navigation.findNavController(requireView()).navigate(
+                    R.id.action_devices_to_device_config, args
+                );
+            }
+            
+            @Override
+            public void onDeleteDevice(Device device) {
+                viewModel.deleteDevice(device.getId());
+            }
+            
+            @Override
+            public void onDuplicateDevice(Device device) {
+                viewModel.duplicateDevice(device);
+            }
+        });
+        
+        bottomSheet.show(getParentFragmentManager(), "device_options");
+    }
+
+    /**
+     * Actualiza el estado vacío de la lista
+     */
+    private void updateEmptyState(boolean isEmpty) {
+        if (isEmpty) {
+            binding.emptyStateGroup.setVisibility(View.VISIBLE);
+            binding.recyclerDevices.setVisibility(View.GONE);
+        } else {
+            binding.emptyStateGroup.setVisibility(View.GONE);
+            binding.recyclerDevices.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Actualiza el indicador de sincronización
+     */
+    private void updateSyncIndicator(DevicesViewModel.SyncStatus syncStatus) {
+        switch (syncStatus) {
+            case SYNCED:
+                binding.syncIndicator.setVisibility(View.GONE);
+                break;
+            case SYNCING:
+                binding.syncIndicator.setVisibility(View.VISIBLE);
+                binding.syncIndicator.setText(R.string.sync_in_progress);
+                binding.syncIndicator.setTextColor(getResources().getColor(R.color.warning, null));
+                break;
+            case ERROR:
+                binding.syncIndicator.setVisibility(View.VISIBLE);
+                binding.syncIndicator.setText(R.string.sync_error);
+                binding.syncIndicator.setTextColor(getResources().getColor(R.color.error, null));
+                break;
+            case OFFLINE:
+                binding.syncIndicator.setVisibility(View.VISIBLE);
+                binding.syncIndicator.setText(R.string.offline_mode);
+                binding.syncIndicator.setTextColor(getResources().getColor(R.color.text_secondary, null));
+                break;
+        }
+    }
+
+    /**
+     * Actualiza las tarjetas de estadísticas
+     */
+    private void updateStatsCards(DevicesViewModel.DeviceStats stats) {
+        binding.cardTotalDevices.setText(String.valueOf(stats.totalDevices));
+        binding.cardActiveDevices.setText(String.valueOf(stats.activeDevices));
+        binding.cardOfflineDevices.setText(String.valueOf(stats.offlineDevices));
+        
+        // Calcular porcentaje de dispositivos activos
+        if (stats.totalDevices > 0) {
+            int activePercentage = (stats.activeDevices * 100) / stats.totalDevices;
+            binding.progressActiveDevices.setProgress(activePercentage);
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+}

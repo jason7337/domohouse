@@ -63,8 +63,8 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        // Inicializar ViewModel
-        viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+        // Inicializar ViewModel con Factory para AndroidViewModel
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(ProfileViewModel.class);
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
         
@@ -161,7 +161,7 @@ public class ProfileFragment extends Fragment {
         });
         
         // Observar errores
-        viewModel.error.observe(getViewLifecycleOwner(), error -> {
+        viewModel.errorMessage.observe(getViewLifecycleOwner(), error -> {
             if (error != null && !error.isEmpty()) {
                 Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
             }

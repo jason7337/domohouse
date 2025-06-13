@@ -17,9 +17,11 @@
     <color name="success">#4CAF50</color>
     <color name="warning">#FF9800</color>
     <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
     
     <!-- Additional Colors -->
     <color name="divider">#E0E0E0</color>
+    <color name="surface_variant">#F8F8F8</color>
     
     <!-- Legacy Colors -->
     <color name="black">#FF000000</color>

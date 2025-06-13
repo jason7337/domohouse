@@ -73,6 +73,13 @@ public abstract class AppDatabase extends RoomDatabase {
     }
     
     /**
+     * Alias para getDatabase para compatibilidad
+     */
+    public static AppDatabase getInstance(final Context context) {
+        return getDatabase(context);
+    }
+    
+    /**
      * Callback para inicializar la base de datos con datos por defecto si es necesario
      */
     private static RoomDatabase.Callback sRoomDatabaseCallback = new RoomDatabase.Callback() {

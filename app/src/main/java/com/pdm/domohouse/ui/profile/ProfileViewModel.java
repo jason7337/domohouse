@@ -1,17 +1,19 @@
 package com.pdm.domohouse.ui.profile;
 
+import android.app.Application;
 import android.net.Uri;
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.pdm.domohouse.data.model.UserProfile;
-import com.pdm.domohouse.ui.base.BaseViewModel;
+import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 
 /**
  * ViewModel para la gestión del perfil de usuario
  * Maneja la información personal, configuraciones y seguridad
  * Versión simplificada para Sesión 5B
  */
-public class ProfileViewModel extends BaseViewModel {
+public class ProfileViewModel extends BaseAndroidViewModel {
     
     // LiveData para el perfil del usuario
     private final MutableLiveData<UserProfile> _userProfile = new MutableLiveData<>();
@@ -32,8 +34,8 @@ public class ProfileViewModel extends BaseViewModel {
     // Perfil original para comparar cambios
     private UserProfile originalProfile;
     
-    public ProfileViewModel() {
-        super();
+    public ProfileViewModel(@NonNull Application application) {
+        super(application);
         
         // Cargar el perfil del usuario con datos de ejemplo
         loadUserProfile();

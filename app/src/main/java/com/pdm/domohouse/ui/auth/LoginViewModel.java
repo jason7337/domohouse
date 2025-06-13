@@ -1,10 +1,12 @@
 package com.pdm.domohouse.ui.auth;
 
+import android.app.Application;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -13,14 +15,14 @@ import com.pdm.domohouse.network.FirebaseAuthManager;
 import com.pdm.domohouse.data.database.AppDatabase;
 import com.pdm.domohouse.data.database.entity.UserProfileEntity;
 import com.pdm.domohouse.sync.SyncManager;
-import com.pdm.domohouse.ui.base.BaseViewModel;
+import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 import com.pdm.domohouse.utils.SecurePreferencesManager;
 
 /**
  * ViewModel para la pantalla de Login
  * Maneja la lógica de autenticación con Firebase y PIN local
  */
-public class LoginViewModel extends BaseViewModel {
+public class LoginViewModel extends BaseAndroidViewModel {
     
     // Managers para autenticación
     private final FirebaseAuthManager firebaseAuthManager;
@@ -56,20 +58,25 @@ public class LoginViewModel extends BaseViewModel {
     /**
      * Constructor
      */
-    public LoginViewModel() {
-        super();
+    public LoginViewModel(@NonNull Application application) {
+        super(application);
         this.firebaseAuthManager = FirebaseAuthManager.getInstance();
+        // Inicializar managers que requieren contexto
+        this.securePreferencesManager = SecurePreferencesManager.getInstance(application);
+        this.database = AppDatabase.getDatabase(application);
+        this.syncManager = SyncManager.getInstance(application);
+        this.appContext = application;
     }
     
     /**
-     * Inicializa el manager de preferencias seguras
+     * Método legacy para compatibilidad - ya no es necesario llamarlo
+     * Los managers ahora se inicializan en el constructor
      * @param context Contexto de la aplicación
+     * @deprecated Usar el constructor que recibe Application
      */
+    @Deprecated
     public void initializeSecurePreferences(Context context) {
-        this.appContext = context.getApplicationContext();
-        this.securePreferencesManager = SecurePreferencesManager.getInstance(context);
-        this.database = AppDatabase.getDatabase(context);
-        this.syncManager = SyncManager.getInstance(context);
+        // Los managers ya están inicializados en el constructor
     }
     
     /**

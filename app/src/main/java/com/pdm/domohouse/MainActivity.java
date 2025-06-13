@@ -28,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
+        // Inicializar Bottom Navigation primero
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        
         // Configurar Navigation Component
         setupNavigation();
         
@@ -60,14 +63,16 @@ public class MainActivity extends AppCompatActivity {
             
             // Listener para mostrar/ocultar bottom navigation según el destino
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-                // Mostrar bottom navigation solo en fragmentos principales
-                boolean showBottomNav = destination.getId() == R.id.homeFragment ||
-                                      destination.getId() == R.id.profileFragment ||
-                                      destination.getId() == R.id.devicesFragment ||
-                                      destination.getId() == R.id.settingsFragment;
-                
-                bottomNavigationView.setVisibility(showBottomNav ? 
-                    BottomNavigationView.VISIBLE : BottomNavigationView.GONE);
+                if (bottomNavigationView != null) {
+                    // Mostrar bottom navigation solo en fragmentos principales
+                    boolean showBottomNav = destination.getId() == R.id.homeFragment ||
+                                          destination.getId() == R.id.profileFragment ||
+                                          destination.getId() == R.id.devicesFragment ||
+                                          destination.getId() == R.id.settingsFragment;
+                    
+                    bottomNavigationView.setVisibility(showBottomNav ? 
+                        BottomNavigationView.VISIBLE : BottomNavigationView.GONE);
+                }
             });
         }
     }
@@ -76,8 +81,6 @@ public class MainActivity extends AppCompatActivity {
      * Configura el BottomNavigationView
      */
     private void setupBottomNavigation() {
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
-        
         if (bottomNavigationView != null && navController != null) {
             // Conectar el BottomNavigationView con el NavController
             NavigationUI.setupWithNavController(bottomNavigationView, navController);

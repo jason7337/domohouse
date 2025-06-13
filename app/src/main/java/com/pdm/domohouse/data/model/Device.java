@@ -49,25 +49,40 @@ public class Device {
     private int signalStrength;
 
     /**
+     * Constructor vacío para compatibilidad
+     */
+    public Device() {
+        // Valores por defecto básicos
+        this.enabled = false;
+        this.connected = false;
+        this.currentValue = 0;
+        this.lastUpdated = System.currentTimeMillis();
+        this.batteryLevel = 100;
+        this.autoMode = false;
+        this.signalStrength = 100;
+        this.lastStateChange = System.currentTimeMillis();
+    }
+
+    /**
      * Constructor completo para crear un dispositivo
      */
     public Device(String id, String name, DeviceType type, String roomId) {
+        this();
         this.id = id;
         this.name = name;
         this.type = type;
         this.roomId = roomId;
         
-        // Valores por defecto
-        this.enabled = false;
-        this.connected = false;
-        this.currentValue = 0;
-        this.minValue = type.getDefaultMinValue();
-        this.maxValue = type.getDefaultMaxValue();
-        this.unit = type.getDefaultUnit();
-        this.lastUpdated = System.currentTimeMillis();
-        this.batteryLevel = 100;
-        this.autoMode = false;
-        this.signalStrength = 100;
+        // Configurar valores basados en el tipo
+        if (type != null) {
+            this.minValue = type.getDefaultMinValue();
+            this.maxValue = type.getDefaultMaxValue();
+            this.unit = type.getDefaultUnit();
+        } else {
+            this.minValue = 0;
+            this.maxValue = 1;
+            this.unit = "";
+        }
     }
 
     // Getters y Setters
@@ -79,6 +94,11 @@ public class Device {
 
     public DeviceType getType() { return type; }
     public void setType(DeviceType type) { this.type = type; }
+    
+    // Alias para setType (compatibilidad)
+    public void setDeviceType(DeviceType type) { 
+        setType(type); 
+    }
 
     public String getRoomId() { return roomId; }
     public void setRoomId(String roomId) { this.roomId = roomId; }
@@ -207,6 +227,117 @@ public class Device {
      */
     public long getMinutesSinceLastUpdate() {
         return (System.currentTimeMillis() - lastUpdated) / (1000 * 60);
+    }
+    
+    // Métodos de compatibilidad para adaptadores
+    
+    /**
+     * Verifica si el dispositivo está encendido (alias para isEnabled)
+     * @return true si está encendido
+     */
+    public boolean isOn() {
+        return enabled;
+    }
+    
+    /**
+     * Enciende o apaga el dispositivo (alias para setEnabled)
+     * @param on true para encender, false para apagar
+     */
+    public void setOn(boolean on) {
+        setEnabled(on);
+    }
+    
+    /**
+     * Obtiene la intensidad del dispositivo (alias para getCurrentValue)
+     * @return intensidad como porcentaje (0-100)
+     */
+    public float getIntensity() {
+        return getValuePercentage();
+    }
+    
+    /**
+     * Establece la intensidad del dispositivo
+     * @param intensity intensidad como porcentaje (0-100)
+     */
+    public void setIntensity(float intensity) {
+        float value = minValue + (intensity / 100f) * (maxValue - minValue);
+        setCurrentValue(value);
+    }
+    
+    // Métodos adicionales para compatibilidad con sistema de cache y sync
+    
+    /**
+     * Timestamp del último cambio de estado
+     */
+    private long lastStateChange = System.currentTimeMillis();
+    
+    /**
+     * Temperatura del dispositivo (para sensores de temperatura)
+     */
+    private Float temperature;
+    
+    /**
+     * Obtiene el timestamp del último cambio de estado
+     */
+    public long getLastStateChange() {
+        return lastStateChange;
+    }
+    
+    /**
+     * Establece el timestamp del último cambio de estado
+     */
+    public void setLastStateChange(long lastStateChange) {
+        this.lastStateChange = lastStateChange;
+    }
+    
+    /**
+     * Obtiene la temperatura del dispositivo
+     */
+    public Float getTemperature() {
+        return temperature;
+    }
+    
+    /**
+     * Establece la temperatura del dispositivo
+     */
+    public void setTemperature(Float temperature) {
+        this.temperature = temperature;
+        updateLastUpdated();
+    }
+    
+    /**
+     * Obtiene el timestamp de actualización (alias para lastUpdated)
+     */
+    public long getUpdatedAt() {
+        return lastUpdated;
+    }
+    
+    /**
+     * Establece el timestamp de actualización (alias para setLastUpdated)
+     */
+    public void setUpdatedAt(long updatedAt) {
+        setLastUpdated(updatedAt);
+    }
+    
+    /**
+     * Obtiene el tipo de dispositivo (alias para compatibility)
+     */
+    public DeviceType getDeviceType() {
+        return type;
+    }
+    
+    /**
+     * Obtiene el ID del dispositivo (alias para getId)
+     */
+    public String getDeviceId() {
+        return id;
+    }
+    
+    /**
+     * Establece el ID del dispositivo (alias para setId)
+     */
+    public void setDeviceId(String deviceId) {
+        setId(deviceId);
     }
 
     @Override

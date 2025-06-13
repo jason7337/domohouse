@@ -47,6 +47,9 @@ public class Room {
     
     // Alto de la habitación en la vista de maqueta
     private float height;
+    
+    // Piso en el que se encuentra la habitación
+    private int floor;
 
     /**
      * Constructor completo para crear una habitación
@@ -76,6 +79,14 @@ public class Room {
      */
     public Room(String id, String name, RoomType type) {
         this(id, name, type, 0, 0, 1, 1);
+    }
+    
+    /**
+     * Constructor con piso (para compatibilidad con AddDeviceViewModel)
+     */
+    public Room(String id, String name, RoomType type, int floor) {
+        this(id, name, type, 0, 0, 1, 1);
+        this.floor = floor;
     }
 
     // Getters y Setters
@@ -145,6 +156,22 @@ public class Room {
         } else {
             return RoomStatus.NORMAL;
         }
+    }
+    
+    /**
+     * Obtiene el piso de la habitación
+     * @return número de piso
+     */
+    public int getFloor() {
+        return floor;
+    }
+    
+    /**
+     * Establece el piso de la habitación
+     * @param floor número de piso
+     */
+    public void setFloor(int floor) {
+        this.floor = floor;
     }
 
     @Override

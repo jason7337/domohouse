@@ -44,11 +44,8 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
-        // Inicializar ViewModel
-        viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
-        
-        // Inicializar preferencias seguras
-        viewModel.initializeSecurePreferences(requireContext());
+        // Inicializar ViewModel con Factory para AndroidViewModel
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(LoginViewModel.class);
         
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(getViewLifecycleOwner());

@@ -17,18 +17,14 @@
             android:id="@+id/action_splash_to_login"
             app:destination="@id/loginFragment"
             app:popUpTo="@id/splashFragment"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            app:popUpToInclusive="true" />
             
         <!-- Navegación directa a Home si ya está autenticado -->
         <action
             android:id="@+id/action_splash_to_home"
             app:destination="@id/homeFragment"
             app:popUpTo="@id/splashFragment"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            app:popUpToInclusive="true" />
     </fragment>
 
     <!-- Fragmento de Login -->
@@ -43,16 +39,12 @@
             android:id="@+id/action_login_to_home"
             app:destination="@id/homeFragment"
             app:popUpTo="@id/loginFragment"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
+            app:popUpToInclusive="true" />
             
         <!-- Navegación a registro -->
         <action
             android:id="@+id/action_login_to_register"
-            app:destination="@id/registerFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
+            app:destination="@id/registerFragment" />
     </fragment>
 
     <!-- Fragmento de Registro -->
@@ -62,102 +54,67 @@
         android:label="@string/register_title"
         tools:layout="@layout/fragment_register">
         
-        <!-- Navegación de vuelta a Login -->
+        <!-- Navegación a Home después de registro exitoso -->
+        <action
+            android:id="@+id/action_register_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+            
+        <!-- Acción para compatibilidad -->
+        <action
+            android:id="@+id/action_registerFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+            
+        <!-- Volver a Login -->
         <action
             android:id="@+id/action_register_to_login"
             app:destination="@id/loginFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
-            
-        <!-- Navegación a Home después de registro exitoso -->
-        <action
-            android:id="@+id/action_registerFragment_to_homeFragment"
-            app:destination="@id/homeFragment"
-            app:popUpTo="@id/registerFragment"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
     </fragment>
 
-    <!-- Fragmento Home (Dashboard principal) -->
+    <!-- Fragmento de Home Principal -->
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.pdm.domohouse.ui.home.HomeFragment"
         android:label="@string/home_title"
         tools:layout="@layout/fragment_home">
         
-        <!-- Navegación a control de luces -->
-        <action
-            android:id="@+id/action_home_to_lights"
-            app:destination="@id/lightsFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
-            
-        <!-- Navegación a temperatura -->
-        <action
-            android:id="@+id/action_home_to_temperature"
-            app:destination="@id/temperatureFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
-            
-        <!-- Navegación a seguridad -->
-        <action
-            android:id="@+id/action_home_to_security"
-            app:destination="@id/securityFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
-            
-        <!-- Navegación a perfil -->
+        <!-- Navegación a Perfil -->
         <action
             android:id="@+id/action_home_to_profile"
-            app:destination="@id/profileFragment"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            app:destination="@id/profileFragment" />
             
-        <!-- Navegación a dispositivos -->
+        <!-- Navegación a Temperatura -->
         <action
-            android:id="@+id/action_home_to_devices"
-            app:destination="@id/devicesFragment"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            android:id="@+id/action_home_to_temperature"
+            app:destination="@id/temperatureFragment" />
             
-        <!-- Navegación a configuración -->
-        <action
-            android:id="@+id/action_home_to_settings"
-            app:destination="@id/settingsFragment"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
-            
-        <!-- Navegación a login para logout -->
+        <!-- Navegación a Login (logout) -->
         <action
             android:id="@+id/action_home_to_login"
             app:destination="@id/loginFragment"
-            app:popUpTo="@id/nav_graph"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
+            
+        <!-- Navegación a Luces -->
+        <action
+            android:id="@+id/action_home_to_lights"
+            app:destination="@id/lightsFragment" />
+            
+        <!-- Navegación a Seguridad -->
+        <action
+            android:id="@+id/action_home_to_security"
+            app:destination="@id/securityFragment" />
+            
+        <!-- Navegación a Dispositivos -->
+        <action
+            android:id="@+id/action_home_to_devices"
+            app:destination="@id/devicesFragment" />
     </fragment>
-
-    <!-- Fragmento de Control de Luces -->
-    <fragment
-        android:id="@+id/lightsFragment"
-        android:name="com.pdm.domohouse.ui.lights.LightsFragment"
-        android:label="@string/lights_title"
-        tools:layout="@layout/fragment_lights" />
-
-    <!-- Fragmento de Temperatura -->
-    <fragment
-        android:id="@+id/temperatureFragment"
-        android:name="com.pdm.domohouse.ui.temperature.TemperatureFragment"
-        android:label="@string/temperature_title"
-        tools:layout="@layout/fragment_temperature" />
-
-    <!-- Fragmento de Seguridad -->
-    <fragment
-        android:id="@+id/securityFragment"
-        android:name="com.pdm.domohouse.ui.security.SecurityFragment"
-        android:label="@string/security_title"
-        tools:layout="@layout/fragment_security" />
 
     <!-- Fragmento de Perfil -->
     <fragment
@@ -166,28 +123,38 @@
         android:label="@string/profile_title"
         tools:layout="@layout/fragment_profile">
         
-        <!-- Navegación de vuelta a login después del logout -->
+        <!-- Navegación a Login (logout) -->
         <action
             android:id="@+id/action_profile_to_login"
             app:destination="@id/loginFragment"
-            app:popUpTo="@id/nav_graph"
-            app:popUpToInclusive="true"
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/fade_out" />
+            app:popUpTo="@id/profileFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
-    <!-- Fragmento de Dispositivos -->
+    <!-- Fragmento de Temperatura -->
+    <fragment
+        android:id="@+id/temperatureFragment"
+        android:name="com.pdm.domohouse.ui.temperature.TemperatureFragment"
+        android:label="@string/temperature_title"
+        tools:layout="@layout/fragment_temperature" />
+
+    <!-- Fragmentos temporales (stub) para evitar errores de navegación -->
+    <fragment
+        android:id="@+id/lightsFragment"
+        android:name="com.pdm.domohouse.ui.lights.LightsFragment"
+        android:label="@string/lights_title"
+        tools:layout="@layout/fragment_lights" />
+        
+    <fragment
+        android:id="@+id/securityFragment"
+        android:name="com.pdm.domohouse.ui.security.SecurityFragment"
+        android:label="Security"
+        tools:layout="@layout/fragment_home" />
+        
     <fragment
         android:id="@+id/devicesFragment"
         android:name="com.pdm.domohouse.ui.devices.DevicesFragment"
-        android:label="@string/devices_title"
+        android:label="Devices"
         tools:layout="@layout/fragment_devices" />
-
-    <!-- Fragmento de Configuración -->
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.pdm.domohouse.ui.settings.SettingsFragment"
-        android:label="@string/settings_title"
-        tools:layout="@layout/fragment_settings" />
 
 </navigation>

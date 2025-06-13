@@ -32,7 +32,7 @@ public enum DeviceType {
     LIGHT_SWITCH("Interruptor de Luz", "💡", false, true, 
                 0, 1, ""),
     
-    DIMMER_LIGHT("Luz Regulable", "🔆", false, true, 
+    LIGHT_DIMMER("Luz Regulable", "🔆", false, true, 
                 0, 100, "%"),
     
     RGB_LIGHT("Luz RGB", "🌈", false, true, 
@@ -55,10 +55,10 @@ public enum DeviceType {
     SMART_LOCK("Cerradura Inteligente", "🔐", false, true, 
               0, 1, ""),
     
-    ALARM_SYSTEM("Sistema de Alarma", "🔔", false, true, 
+    ALARM("Sistema de Alarma", "🔔", false, true, 
                 0, 1, ""),
     
-    SECURITY_CAMERA("Cámara de Seguridad", "📹", false, true, 
+    CAMERA("Cámara de Seguridad", "📹", false, true, 
                    0, 1, ""),
     
     // ACTUADORES GENERALES
@@ -137,6 +137,14 @@ public enum DeviceType {
     }
 
     /**
+     * Verifica si el dispositivo tiene valores variables (no solo on/off)
+     * @return true si tiene valores variables
+     */
+    public boolean hasVariableValue() {
+        return defaultMaxValue > 1 || !defaultUnit.isEmpty();
+    }
+
+    /**
      * Verifica si el dispositivo es crítico para la seguridad
      * @return true si es crítico para seguridad
      */
@@ -144,8 +152,8 @@ public enum DeviceType {
         switch (this) {
             case SMOKE_DETECTOR:
             case SMART_LOCK:
-            case ALARM_SYSTEM:
-            case SECURITY_CAMERA:
+            case ALARM:
+            case CAMERA:
                 return true;
             default:
                 return false;

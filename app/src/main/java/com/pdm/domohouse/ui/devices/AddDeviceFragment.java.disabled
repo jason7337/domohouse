@@ -1,0 +1,585 @@
+package com.pdm.domohouse.ui.devices;
+
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+
+import com.pdm.domohouse.R;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.data.model.DeviceType;
+import com.pdm.domohouse.data.model.Room;
+import com.pdm.domohouse.databinding.FragmentAddDeviceBinding;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Fragment para agregar un nuevo dispositivo
+ * Implementa un wizard paso a paso para configurar el dispositivo
+ */
+public class AddDeviceFragment extends Fragment {
+    
+    private static final String TAG = "AddDeviceFragment";
+    
+    private FragmentAddDeviceBinding binding;
+    private AddDeviceViewModel viewModel;
+    
+    // Estados del wizard
+    private int currentStep = 0;
+    private static final int STEP_DEVICE_TYPE = 0;
+    private static final int STEP_BASIC_INFO = 1;
+    private static final int STEP_CONFIGURATION = 2;
+    private static final int STEP_TEST_CONNECTION = 3;
+    private static final int TOTAL_STEPS = 4;
+    
+    // Datos del dispositivo en construcción
+    private DeviceType selectedDeviceType;
+    private String deviceName;
+    private String selectedRoomId;
+    private float minValue;
+    private float maxValue;
+    private String unit;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentAddDeviceBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        // Inicializar ViewModel
+        viewModel = new ViewModelProvider(this).get(AddDeviceViewModel.class);
+        
+        // Configurar UI inicial
+        setupToolbar();
+        setupStepIndicator();
+        setupButtons();
+        setupObservers();
+        
+        // Cargar datos necesarios
+        viewModel.loadRooms();
+        
+        // Mostrar primer paso
+        showStep(STEP_DEVICE_TYPE);
+    }
+
+    /**
+     * Configura la toolbar
+     */
+    private void setupToolbar() {
+        binding.toolbar.setTitle(R.string.add_device_title);
+        binding.toolbar.setNavigationOnClickListener(v -> 
+            Navigation.findNavController(v).navigateUp());
+    }
+
+    /**
+     * Configura el indicador de pasos
+     */
+    private void setupStepIndicator() {
+        binding.stepIndicator.setText(getString(R.string.step_indicator, 1, TOTAL_STEPS));
+        binding.progressSteps.setMax(TOTAL_STEPS);
+        binding.progressSteps.setProgress(1);
+    }
+
+    /**
+     * Configura los botones de navegación
+     */
+    private void setupButtons() {
+        binding.buttonPrevious.setOnClickListener(v -> previousStep());
+        binding.buttonNext.setOnClickListener(v -> nextStep());
+        binding.buttonFinish.setOnClickListener(v -> finishWizard());
+        
+        // Inicialmente ocultar botón anterior y mostrar siguiente
+        binding.buttonPrevious.setVisibility(View.GONE);
+        binding.buttonNext.setVisibility(View.VISIBLE);
+        binding.buttonFinish.setVisibility(View.GONE);
+    }
+
+    /**
+     * Configura los observers del ViewModel
+     */
+    private void setupObservers() {
+        // Observer para habitaciones
+        viewModel.getRooms().observe(getViewLifecycleOwner(), rooms -> {
+            if (rooms != null) {
+                setupRoomSpinner(rooms);
+            }
+        });
+        
+        // Observer para estado de carga
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            binding.progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            
+            // Deshabilitar botones durante la carga
+            binding.buttonNext.setEnabled(!isLoading);
+            binding.buttonFinish.setEnabled(!isLoading);
+        });
+        
+        // Observer para errores
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+            }
+        });
+        
+        // Observer para éxito al agregar dispositivo
+        viewModel.getDeviceAdded().observe(getViewLifecycleOwner(), success -> {
+            if (success) {
+                Toast.makeText(requireContext(), R.string.device_added_successfully, Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(requireView()).navigateUp();
+            }
+        });
+    }
+
+    /**
+     * Muestra el paso especificado del wizard
+     */
+    private void showStep(int step) {
+        currentStep = step;
+        
+        // Actualizar indicador de progreso
+        binding.stepIndicator.setText(getString(R.string.step_indicator, step + 1, TOTAL_STEPS));
+        binding.progressSteps.setProgress(step + 1);
+        
+        // Ocultar todas las vistas de pasos
+        // binding.stepDeviceType.setVisibility(View.GONE); // TODO: Fix layout binding
+        binding.stepBasicInfo.setVisibility(View.GONE);
+        binding.stepConfiguration.setVisibility(View.GONE);
+        binding.stepTestConnection.setVisibility(View.GONE);
+        
+        // Mostrar el paso actual
+        switch (step) {
+            case STEP_DEVICE_TYPE:
+                showDeviceTypeStep();
+                break;
+            case STEP_BASIC_INFO:
+                showBasicInfoStep();
+                break;
+            case STEP_CONFIGURATION:
+                showConfigurationStep();
+                break;
+            case STEP_TEST_CONNECTION:
+                showTestConnectionStep();
+                break;
+        }
+        
+        // Actualizar botones
+        updateButtons();
+    }
+
+    /**
+     * Muestra el paso de selección de tipo de dispositivo
+     */
+    private void showDeviceTypeStep() {
+        // binding.stepDeviceType.setVisibility(View.VISIBLE); // TODO: Fix layout binding
+        binding.stepTitle.setText(R.string.step_select_device_type);
+        binding.stepDescription.setText(R.string.step_select_device_type_description);
+        
+        // Configurar RadioGroup con tipos de dispositivo
+        setupDeviceTypeSelection();
+    }
+
+    /**
+     * Muestra el paso de información básica
+     */
+    private void showBasicInfoStep() {
+        binding.stepBasicInfo.setVisibility(View.VISIBLE);
+        binding.stepTitle.setText(R.string.step_basic_info);
+        binding.stepDescription.setText(R.string.step_basic_info_description);
+        
+        // Configurar campos de entrada
+        setupBasicInfoFields();
+    }
+
+    /**
+     * Muestra el paso de configuración específica
+     */
+    private void showConfigurationStep() {
+        binding.stepConfiguration.setVisibility(View.VISIBLE);
+        binding.stepTitle.setText(R.string.step_configuration);
+        binding.stepDescription.setText(R.string.step_configuration_description);
+        
+        // Configurar campos específicos del tipo de dispositivo
+        setupConfigurationFields();
+    }
+
+    /**
+     * Muestra el paso de prueba de conexión
+     */
+    private void showTestConnectionStep() {
+        binding.stepTestConnection.setVisibility(View.VISIBLE);
+        binding.stepTitle.setText(R.string.step_test_connection);
+        binding.stepDescription.setText(R.string.step_test_connection_description);
+        
+        // Iniciar prueba de conexión automáticamente
+        startConnectionTest();
+    }
+
+    /**
+     * Configura la selección de tipo de dispositivo
+     */
+    private void setupDeviceTypeSelection() {
+        // Configurar lista de tipos de dispositivo
+        DeviceType[] deviceTypes = DeviceType.values();
+        
+        binding.radioGroupDeviceType.removeAllViews();
+        
+        for (DeviceType type : deviceTypes) {
+            android.widget.RadioButton radioButton = new android.widget.RadioButton(requireContext());
+            radioButton.setText(getDeviceTypeDisplayName(type));
+            radioButton.setId(type.ordinal());
+            
+            binding.radioGroupDeviceType.addView(radioButton);
+        }
+        
+        // Listener para selección
+        binding.radioGroupDeviceType.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId >= 0 && checkedId < DeviceType.values().length) {
+                selectedDeviceType = DeviceType.values()[checkedId];
+                validateCurrentStep();
+            }
+        });
+    }
+
+    /**
+     * Configura los campos de información básica
+     */
+    private void setupBasicInfoFields() {
+        // Configurar nombre del dispositivo
+        binding.editDeviceName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                deviceName = s.toString().trim();
+                validateCurrentStep();
+            }
+            
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+        
+        // Sugerir nombre basado en el tipo de dispositivo
+        if (selectedDeviceType != null) {
+            String suggestedName = getSuggestedDeviceName(selectedDeviceType);
+            binding.editDeviceName.setText(suggestedName);
+        }
+    }
+
+    /**
+     * Configura los campos de configuración específica
+     */
+    private void setupConfigurationFields() {
+        if (selectedDeviceType != null) {
+            // Configurar valores por defecto según el tipo
+            minValue = selectedDeviceType.getDefaultMinValue();
+            maxValue = selectedDeviceType.getDefaultMaxValue();
+            unit = selectedDeviceType.getDefaultUnit();
+            
+            binding.editMinValue.setText(String.valueOf((int) minValue));
+            binding.editMaxValue.setText(String.valueOf((int) maxValue));
+            binding.editUnit.setText(unit);
+            
+            // Mostrar u ocultar campos según el tipo de dispositivo
+            if (selectedDeviceType.hasVariableValue()) {
+                binding.layoutValueRange.setVisibility(View.VISIBLE);
+            } else {
+                binding.layoutValueRange.setVisibility(View.GONE);
+            }
+            
+            // Listeners para validación
+            setupConfigurationValidation();
+        }
+    }
+
+    /**
+     * Configura la validación de campos de configuración
+     */
+    private void setupConfigurationValidation() {
+        TextWatcher configWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validateConfigurationFields();
+            }
+            
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
+        
+        binding.editMinValue.addTextChangedListener(configWatcher);
+        binding.editMaxValue.addTextChangedListener(configWatcher);
+        binding.editUnit.addTextChangedListener(configWatcher);
+    }
+
+    /**
+     * Configura el spinner de habitaciones
+     */
+    private void setupRoomSpinner(List<Room> rooms) {
+        List<String> roomNames = new ArrayList<>();
+        
+        for (Room room : rooms) {
+            roomNames.add(room.getName());
+        }
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            roomNames
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        
+        binding.spinnerRoom.setAdapter(adapter);
+        binding.spinnerRoom.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < rooms.size()) {
+                    selectedRoomId = rooms.get(position).getId();
+                    validateCurrentStep();
+                }
+            }
+            
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+    }
+
+    /**
+     * Inicia la prueba de conexión del dispositivo
+     */
+    private void startConnectionTest() {
+        binding.textConnectionStatus.setText(R.string.testing_connection);
+        binding.progressConnection.setVisibility(View.VISIBLE);
+        binding.iconConnectionResult.setVisibility(View.GONE);
+        
+        // Simular prueba de conexión (en implementación real conectaría con hardware)
+        binding.getRoot().postDelayed(() -> {
+            // Simular éxito (en implementación real dependería del hardware)
+            binding.progressConnection.setVisibility(View.GONE);
+            binding.iconConnectionResult.setVisibility(View.VISIBLE);
+            binding.iconConnectionResult.setImageResource(R.drawable.ic_check_circle);
+            binding.iconConnectionResult.setColorFilter(
+                getResources().getColor(R.color.success, null));
+            binding.textConnectionStatus.setText(R.string.connection_successful);
+            
+            validateCurrentStep();
+        }, 2000);
+    }
+
+    /**
+     * Avanza al siguiente paso
+     */
+    private void nextStep() {
+        if (validateCurrentStep() && currentStep < TOTAL_STEPS - 1) {
+            showStep(currentStep + 1);
+        }
+    }
+
+    /**
+     * Retrocede al paso anterior
+     */
+    private void previousStep() {
+        if (currentStep > 0) {
+            showStep(currentStep - 1);
+        }
+    }
+
+    /**
+     * Finaliza el wizard y crea el dispositivo
+     */
+    private void finishWizard() {
+        if (validateAllSteps()) {
+            createDevice();
+        }
+    }
+
+    /**
+     * Crea el dispositivo con los datos ingresados
+     */
+    private void createDevice() {
+        String deviceId = UUID.randomUUID().toString();
+        
+        Device device = new Device(deviceId, deviceName, selectedDeviceType, selectedRoomId);
+        device.setMinValue(minValue);
+        device.setMaxValue(maxValue);
+        device.setUnit(unit);
+        
+        viewModel.addDevice(device);
+    }
+
+    /**
+     * Valida el paso actual
+     */
+    private boolean validateCurrentStep() {
+        boolean isValid = false;
+        
+        switch (currentStep) {
+            case STEP_DEVICE_TYPE:
+                isValid = selectedDeviceType != null;
+                break;
+            case STEP_BASIC_INFO:
+                isValid = deviceName != null && !deviceName.isEmpty() && selectedRoomId != null;
+                break;
+            case STEP_CONFIGURATION:
+                isValid = validateConfigurationFields();
+                break;
+            case STEP_TEST_CONNECTION:
+                isValid = true; // Se valida cuando termina la prueba
+                break;
+        }
+        
+        updateButtons();
+        return isValid;
+    }
+
+    /**
+     * Valida los campos de configuración
+     */
+    private boolean validateConfigurationFields() {
+        try {
+            if (selectedDeviceType != null && selectedDeviceType.hasVariableValue()) {
+                String minText = binding.editMinValue.getText().toString();
+                String maxText = binding.editMaxValue.getText().toString();
+                
+                if (!minText.isEmpty() && !maxText.isEmpty()) {
+                    float min = Float.parseFloat(minText);
+                    float max = Float.parseFloat(maxText);
+                    
+                    if (min < max) {
+                        minValue = min;
+                        maxValue = max;
+                        unit = binding.editUnit.getText().toString();
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                return true; // No necesita validación para dispositivos sin valores variables
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Valida todos los pasos antes de finalizar
+     */
+    private boolean validateAllSteps() {
+        return selectedDeviceType != null &&
+               deviceName != null && !deviceName.isEmpty() &&
+               selectedRoomId != null;
+    }
+
+    /**
+     * Actualiza la visibilidad y estado de los botones
+     */
+    private void updateButtons() {
+        // Botón anterior
+        binding.buttonPrevious.setVisibility(currentStep > 0 ? View.VISIBLE : View.GONE);
+        
+        // Botón siguiente/finalizar
+        if (currentStep == TOTAL_STEPS - 1) {
+            binding.buttonNext.setVisibility(View.GONE);
+            binding.buttonFinish.setVisibility(View.VISIBLE);
+            binding.buttonFinish.setEnabled(validateCurrentStep());
+        } else {
+            binding.buttonNext.setVisibility(View.VISIBLE);
+            binding.buttonFinish.setVisibility(View.GONE);
+            binding.buttonNext.setEnabled(validateCurrentStep());
+        }
+    }
+
+    /**
+     * Obtiene el nombre de visualización para un tipo de dispositivo
+     */
+    private String getDeviceTypeDisplayName(DeviceType deviceType) {
+        switch (deviceType) {
+            case LIGHT_SWITCH:
+                return getString(R.string.device_type_light_switch);
+            case LIGHT_DIMMER:
+                return getString(R.string.device_type_light_dimmer);
+            case FAN_SWITCH:
+                return getString(R.string.device_type_fan_switch);
+            case FAN_SPEED:
+                return getString(R.string.device_type_fan_speed);
+            case TEMPERATURE_SENSOR:
+                return getString(R.string.device_type_temperature_sensor);
+            case HUMIDITY_SENSOR:
+                return getString(R.string.device_type_humidity_sensor);
+            case MOTION_SENSOR:
+                return getString(R.string.device_type_motion_sensor);
+            case DOOR_SENSOR:
+                return getString(R.string.device_type_door_sensor);
+            case WINDOW_SENSOR:
+                return getString(R.string.device_type_window_sensor);
+            case SMOKE_DETECTOR:
+                return getString(R.string.device_type_smoke_detector);
+            case SMART_LOCK:
+                return getString(R.string.device_type_smart_lock);
+            case CAMERA:
+                return getString(R.string.device_type_camera);
+            case ALARM:
+                return getString(R.string.device_type_alarm);
+            default:
+                return getString(R.string.device_type_unknown);
+        }
+    }
+
+    /**
+     * Sugiere un nombre para el dispositivo basado en su tipo
+     */
+    private String getSuggestedDeviceName(DeviceType deviceType) {
+        switch (deviceType) {
+            case LIGHT_SWITCH:
+            case LIGHT_DIMMER:
+                return "Luz";
+            case FAN_SWITCH:
+            case FAN_SPEED:
+                return "Ventilador";
+            case TEMPERATURE_SENSOR:
+                return "Sensor de Temperatura";
+            case HUMIDITY_SENSOR:
+                return "Sensor de Humedad";
+            case MOTION_SENSOR:
+                return "Sensor de Movimiento";
+            case DOOR_SENSOR:
+                return "Sensor de Puerta";
+            case WINDOW_SENSOR:
+                return "Sensor de Ventana";
+            case SMOKE_DETECTOR:
+                return "Detector de Humo";
+            case SMART_LOCK:
+                return "Cerradura Inteligente";
+            case CAMERA:
+                return "Cámara";
+            case ALARM:
+                return "Alarma";
+            default:
+                return "Dispositivo";
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+}

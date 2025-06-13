@@ -39,6 +39,9 @@ public class UserPreferences {
     private boolean developerModeEnabled;
     private boolean analyticsEnabled;
     
+    // Timestamp de última sincronización
+    private long lastSync;
+    
     // Campos adicionales para sincronización
     private String userId;
     private boolean motionAlerts;
@@ -345,6 +348,22 @@ public class UserPreferences {
     
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    /**
+     * Obtiene el timestamp de la última sincronización
+     * @return timestamp de última sincronización
+     */
+    public long getLastSync() {
+        return lastSync;
+    }
+    
+    /**
+     * Establece el timestamp de la última sincronización
+     * @param lastSync timestamp de última sincronización
+     */
+    public void setLastSync(long lastSync) {
+        this.lastSync = lastSync;
     }
     
     public long getUpdatedAt() {

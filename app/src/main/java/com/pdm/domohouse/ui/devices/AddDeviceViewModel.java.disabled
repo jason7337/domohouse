@@ -1,0 +1,279 @@
+package com.pdm.domohouse.ui.devices;
+
+import android.app.Application;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
+import com.pdm.domohouse.data.database.AppDatabase;
+import com.pdm.domohouse.data.database.dao.DeviceDao;
+import com.pdm.domohouse.data.database.dao.RoomDao;
+import com.pdm.domohouse.data.database.entity.DeviceEntity;
+import com.pdm.domohouse.data.database.entity.RoomEntity;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.data.model.Room;
+import com.pdm.domohouse.data.model.RoomType;
+import com.pdm.domohouse.utils.DeviceMapper;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/**
+ * ViewModel para el wizard de agregar dispositivos
+ * Maneja la lógica de validación, persistencia y comunicación con hardware
+ */
+public class AddDeviceViewModel extends AndroidViewModel {
+    
+    private static final String TAG = "AddDeviceViewModel";
+    
+    // Ejecutor para operaciones en background
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    
+    // DAOs para acceso a datos
+    private final DeviceDao deviceDao;
+    private final RoomDao roomDao;
+    
+    // LiveData para UI
+    private final MutableLiveData<List<Room>> rooms = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> deviceAdded = new MutableLiveData<>(false);
+    private final MutableLiveData<ConnectionTestResult> connectionTestResult = new MutableLiveData<>();
+
+    /**
+     * Constructor del ViewModel
+     */
+    public AddDeviceViewModel(@NonNull Application application) {
+        super(application);
+        
+        AppDatabase database = AppDatabase.getInstance(application);
+        deviceDao = database.deviceDao();
+        roomDao = database.roomDao();
+    }
+
+    /**
+     * Carga la lista de habitaciones disponibles
+     */
+    public void loadRooms() {
+        isLoading.setValue(true);
+        
+        executor.execute(() -> {
+            try {
+                List<RoomEntity> roomEntities = roomDao.getAllRoomsSync();
+                List<Room> roomList = new ArrayList<>();
+                
+                for (RoomEntity entity : roomEntities) {
+                    Room room = new Room(
+                        entity.getRoomId(),
+                        entity.getName(),
+                        RoomType.valueOf(entity.getRoomType().toUpperCase()),
+                        entity.getFloor()
+                    );
+                    roomList.add(room);
+                }
+                
+                // Si no hay habitaciones, crear algunas por defecto
+                if (roomList.isEmpty()) {
+                    roomList = createDefaultRooms();
+                }
+                
+                rooms.postValue(roomList);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando habitaciones: " + e.getMessage());
+                error.postValue("Error cargando habitaciones: " + e.getMessage());
+                
+                // Crear habitaciones por defecto en caso de error
+                List<Room> defaultRooms = createDefaultRooms();
+                rooms.postValue(defaultRooms);
+                
+            } finally {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    /**
+     * Agrega un nuevo dispositivo al sistema
+     */
+    public void addDevice(Device device) {
+        if (device == null) {
+            error.setValue("Datos del dispositivo inválidos");
+            return;
+        }
+        
+        isLoading.setValue(true);
+        
+        executor.execute(() -> {
+            try {
+                // Validar que el nombre no esté duplicado en la misma habitación
+                if (isDeviceNameDuplicated(device.getName(), device.getRoomId())) {
+                    error.postValue("Ya existe un dispositivo con ese nombre en la habitación");
+                    return;
+                }
+                
+                // Convertir a entidad y guardar en base de datos local
+                DeviceEntity entity = DeviceMapper.modelToEntity(device);
+                deviceDao.insert(entity);
+                
+                Log.d(TAG, "Dispositivo agregado exitosamente: " + device.getName());
+                
+                // TODO: Sincronizar con Firebase
+                // TODO: Enviar configuración al hardware ESP32
+                
+                deviceAdded.postValue(true);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error agregando dispositivo: " + e.getMessage());
+                error.postValue("Error agregando dispositivo: " + e.getMessage());
+            } finally {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    /**
+     * Prueba la conexión con un dispositivo
+     */
+    public void testDeviceConnection(Device device) {
+        isLoading.setValue(true);
+        
+        executor.execute(() -> {
+            try {
+                // Simular prueba de conexión
+                // En implementación real se comunicaría con el hardware ESP32
+                
+                Thread.sleep(2000); // Simular delay de comunicación
+                
+                // Simular resultado exitoso (en implementación real dependería del hardware)
+                ConnectionTestResult result = new ConnectionTestResult(
+                    true, 
+                    "Dispositivo conectado exitosamente",
+                    85 // Nivel de señal simulado
+                );
+                
+                connectionTestResult.postValue(result);
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error probando conexión: " + e.getMessage());
+                
+                ConnectionTestResult result = new ConnectionTestResult(
+                    false,
+                    "Error de conexión: " + e.getMessage(),
+                    0
+                );
+                
+                connectionTestResult.postValue(result);
+            } finally {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    /**
+     * Valida si el nombre del dispositivo ya existe en la habitación
+     */
+    private boolean isDeviceNameDuplicated(String deviceName, String roomId) {
+        try {
+            List<DeviceEntity> existingDevices = deviceDao.getDevicesByRoomSync(roomId);
+            
+            for (DeviceEntity device : existingDevices) {
+                if (device.getName().equalsIgnoreCase(deviceName.trim())) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (Exception e) {
+            Log.e(TAG, "Error validando nombre duplicado: " + e.getMessage());
+            return false; // En caso de error, permitir continuar
+        }
+    }
+
+    /**
+     * Crea habitaciones por defecto si no existen
+     */
+    private List<Room> createDefaultRooms() {
+        List<Room> defaultRooms = new ArrayList<>();
+        
+        defaultRooms.add(new Room("room_1", "Sala", RoomType.LIVING_ROOM, 1));
+        defaultRooms.add(new Room("room_2", "Cocina", RoomType.KITCHEN, 1));
+        defaultRooms.add(new Room("room_3", "Dormitorio Principal", RoomType.BEDROOM, 2));
+        defaultRooms.add(new Room("room_4", "Baño", RoomType.BATHROOM, 1));
+        
+        // Guardar en base de datos
+        executor.execute(() -> {
+            try {
+                for (Room room : defaultRooms) {
+                    RoomEntity entity = new RoomEntity();
+                    entity.setRoomId(room.getId());
+                    entity.setName(room.getName());
+                    entity.setRoomType(room.getType().name().toLowerCase());
+                    entity.setFloor(room.getFloor());
+                    entity.setCreatedAt(System.currentTimeMillis());
+                    entity.setUpdatedAt(System.currentTimeMillis());
+                    
+                    roomDao.insert(entity);
+                }
+                
+                Log.d(TAG, "Habitaciones por defecto creadas");
+            } catch (Exception e) {
+                Log.e(TAG, "Error creando habitaciones por defecto: " + e.getMessage());
+            }
+        });
+        
+        return defaultRooms;
+    }
+
+    // Getters para LiveData
+    
+    public LiveData<List<Room>> getRooms() {
+        return rooms;
+    }
+
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
+    }
+
+    public LiveData<String> getError() {
+        return error;
+    }
+
+    public LiveData<Boolean> getDeviceAdded() {
+        return deviceAdded;
+    }
+
+    public LiveData<ConnectionTestResult> getConnectionTestResult() {
+        return connectionTestResult;
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdown();
+    }
+
+    /**
+     * Clase para representar el resultado de una prueba de conexión
+     */
+    public static class ConnectionTestResult {
+        private final boolean success;
+        private final String message;
+        private final int signalStrength;
+
+        public ConnectionTestResult(boolean success, String message, int signalStrength) {
+            this.success = success;
+            this.message = message;
+            this.signalStrength = signalStrength;
+        }
+
+        public boolean isSuccess() { return success; }
+        public String getMessage() { return message; }
+        public int getSignalStrength() { return signalStrength; }
+    }
+}

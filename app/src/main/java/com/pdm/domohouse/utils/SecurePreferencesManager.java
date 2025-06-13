@@ -21,6 +21,9 @@ public class SecurePreferencesManager {
     private static final String PIN_KEY = "user_pin";
     private static final String PIN_ENABLED_KEY = "pin_enabled";
     private static final String CURRENT_USER_ID_KEY = "current_user_id";
+    private static final String LAST_USER_ID_KEY = "last_user_id";
+    private static final String OFFLINE_SESSION_USER_KEY = "offline_session_user";
+    private static final String OFFLINE_SESSION_TIME_KEY = "offline_session_time";
     
     private static SecurePreferencesManager instance;
     private SharedPreferences sharedPreferences;
@@ -43,6 +46,21 @@ public class SecurePreferencesManager {
     public static synchronized SecurePreferencesManager getInstance(Context context) {
         if (instance == null) {
             instance = new SecurePreferencesManager(context);
+        }
+        return instance;
+    }
+    
+    /**
+     * Obtiene la instancia única del manager usando el contexto de la aplicación
+     * Este método solo debe usarse cuando no se tiene acceso directo al contexto
+     * @return La instancia del SecurePreferencesManager o null si la aplicación no está inicializada
+     */
+    public static synchronized SecurePreferencesManager getInstance() {
+        if (instance == null) {
+            Context appContext = com.pdm.domohouse.DomoHouseApplication.getAppContext();
+            if (appContext != null) {
+                instance = new SecurePreferencesManager(appContext);
+            }
         }
         return instance;
     }
@@ -311,6 +329,167 @@ public class SecurePreferencesManager {
         } catch (Exception e) {
             Log.e(TAG, "Error al obtener ID del usuario", e);
             return null;
+        }
+    }
+    
+    /**
+     * Guarda el ID del último usuario que se autenticó
+     * @param userId ID del usuario
+     * @return true si se guardó exitosamente
+     */
+    public boolean saveLastUserId(String userId) {
+        try {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(LAST_USER_ID_KEY, userId);
+            return editor.commit();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al guardar último ID de usuario", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene el ID del último usuario que se autenticó
+     * @return ID del último usuario o null si no existe
+     */
+    public String getLastUserId() {
+        try {
+            return sharedPreferences.getString(LAST_USER_ID_KEY, null);
+        } catch (Exception e) {
+            Log.e(TAG, "Error al obtener último ID de usuario", e);
+            return null;
+        }
+    }
+    
+    /**
+     * Guarda una sesión offline activa
+     * @param userId ID del usuario de la sesión
+     * @return true si se guardó exitosamente
+     */
+    public boolean saveOfflineSession(String userId) {
+        try {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(OFFLINE_SESSION_USER_KEY, userId);
+            editor.putLong(OFFLINE_SESSION_TIME_KEY, System.currentTimeMillis());
+            return editor.commit();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al guardar sesión offline", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene el ID del usuario de la sesión offline activa
+     * @return ID del usuario o null si no hay sesión activa
+     */
+    public String getOfflineSessionUserId() {
+        try {
+            return sharedPreferences.getString(OFFLINE_SESSION_USER_KEY, null);
+        } catch (Exception e) {
+            Log.e(TAG, "Error al obtener usuario de sesión offline", e);
+            return null;
+        }
+    }
+    
+    /**
+     * Obtiene el timestamp de inicio de la sesión offline
+     * @return timestamp de la sesión o 0 si no hay sesión
+     */
+    public long getOfflineSessionTime() {
+        try {
+            return sharedPreferences.getLong(OFFLINE_SESSION_TIME_KEY, 0);
+        } catch (Exception e) {
+            Log.e(TAG, "Error al obtener tiempo de sesión offline", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * Limpia la sesión offline activa
+     */
+    public void clearOfflineSession() {
+        try {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.remove(OFFLINE_SESSION_USER_KEY);
+            editor.remove(OFFLINE_SESSION_TIME_KEY);
+            editor.commit();
+            Log.d(TAG, "Sesión offline limpiada");
+        } catch (Exception e) {
+            Log.e(TAG, "Error al limpiar sesión offline", e);
+        }
+    }
+    
+    /**
+     * Genera un hash del PIN para almacenamiento seguro
+     * @param pin PIN a hashear
+     * @return Hash del PIN
+     */
+    public String hashPin(String pin) {
+        if (pin == null || pin.length() != 4 || !pin.matches("\\d{4}")) {
+            Log.e(TAG, "PIN inválido para hashear");
+            return null;
+        }
+        
+        try {
+            // Simple hash para almacenamiento local (en producción usar bcrypt o similar)
+            int hash = pin.hashCode();
+            String hashedPin = "HASH_" + Math.abs(hash);
+            Log.d(TAG, "PIN hasheado exitosamente");
+            return hashedPin;
+        } catch (Exception e) {
+            Log.e(TAG, "Error al hashear PIN", e);
+            return null;
+        }
+    }
+    
+    /**
+     * Verifica un PIN contra su hash almacenado
+     * @param pin PIN a verificar
+     * @param storedHash Hash almacenado
+     * @return true si el PIN es correcto
+     */
+    public boolean verifyPin(String pin, String storedHash) {
+        if (pin == null || storedHash == null) {
+            return false;
+        }
+        
+        try {
+            String pinHash = hashPin(pin);
+            boolean isValid = pinHash != null && pinHash.equals(storedHash);
+            Log.d(TAG, "Verificación de PIN con hash: " + (isValid ? "exitosa" : "fallida"));
+            return isValid;
+        } catch (Exception e) {
+            Log.e(TAG, "Error al verificar PIN con hash", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Limpia todos los datos de un usuario específico
+     * @param userId ID del usuario
+     */
+    public void clearUserData(String userId) {
+        try {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            
+            // Limpiar datos específicos del usuario si fuera necesario
+            // Por ahora, limpiar datos generales
+            if (userId.equals(getCurrentUserId())) {
+                editor.remove(CURRENT_USER_ID_KEY);
+            }
+            
+            if (userId.equals(getLastUserId())) {
+                editor.remove(LAST_USER_ID_KEY);
+            }
+            
+            if (userId.equals(getOfflineSessionUserId())) {
+                clearOfflineSession();
+            }
+            
+            editor.commit();
+            Log.d(TAG, "Datos del usuario " + userId + " limpiados");
+        } catch (Exception e) {
+            Log.e(TAG, "Error al limpiar datos del usuario", e);
         }
     }
 }

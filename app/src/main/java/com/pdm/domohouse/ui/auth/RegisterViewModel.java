@@ -1,10 +1,12 @@
 package com.pdm.domohouse.ui.auth;
 
+import android.app.Application;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -12,14 +14,14 @@ import com.google.firebase.auth.FirebaseUser;
 import com.pdm.domohouse.data.model.UserProfile;
 import com.pdm.domohouse.network.FirebaseAuthManager;
 import com.pdm.domohouse.network.FirebaseDataManager;
-import com.pdm.domohouse.ui.base.BaseViewModel;
+import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 import com.pdm.domohouse.utils.SecurePreferencesManager;
 
 /**
  * ViewModel para la pantalla de Registro
  * Maneja la lógica de registro de nuevos usuarios con Firebase
  */
-public class RegisterViewModel extends BaseViewModel {
+public class RegisterViewModel extends BaseAndroidViewModel {
     
     // Managers para autenticación y datos
     private final FirebaseAuthManager firebaseAuthManager;
@@ -88,18 +90,23 @@ public class RegisterViewModel extends BaseViewModel {
     /**
      * Constructor
      */
-    public RegisterViewModel() {
-        super();
+    public RegisterViewModel(@NonNull Application application) {
+        super(application);
         this.firebaseAuthManager = FirebaseAuthManager.getInstance();
         this.firebaseDataManager = FirebaseDataManager.getInstance();
+        // Inicializar manager de preferencias seguras
+        this.securePreferencesManager = SecurePreferencesManager.getInstance(application);
     }
     
     /**
-     * Inicializa el manager de preferencias seguras
+     * Método legacy para compatibilidad - ya no es necesario llamarlo
+     * El manager ahora se inicializa en el constructor
      * @param context Contexto de la aplicación
+     * @deprecated Usar el constructor que recibe Application
      */
+    @Deprecated
     public void initializeSecurePreferences(Context context) {
-        this.securePreferencesManager = SecurePreferencesManager.getInstance(context);
+        // El manager ya está inicializado en el constructor
     }
     
     /**

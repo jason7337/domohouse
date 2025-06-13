@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="fanControl"
+            type="com.pdm.domohouse.data.model.FanControl" />
+        
+        <variable
+            name="listener"
+            type="com.pdm.domohouse.ui.temperature.FanControlListener" />
+    </data>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="4dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:strokeColor="@color/surface"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Header del Ventilador -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Icono y Nombre -->
+                <TextView
+                    android:id="@+id/tv_fan_icon"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/circle"
+                    android:backgroundTint="@{fanControl.isOn ? @color/primary : @color/surface}"
+                    android:gravity="center"
+                    android:text="@{fanControl.deviceType.icon}"
+                    android:textSize="16sp"
+                    tools:text="🪭" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_fan_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{fanControl.deviceName}"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Ventilador Dormitorio" />
+
+                    <TextView
+                        android:id="@+id/tv_fan_room"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{fanControl.roomName}"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        tools:text="Dormitorio Principal" />
+
+                </LinearLayout>
+
+                <!-- Switch de Encendido/Apagado -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_fan_power"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="@{fanControl.isOn}"
+                    android:onCheckedChanged="@{(view, checked) -> listener.onFanPowerChanged(fanControl.deviceId, checked)}"
+                    app:thumbTint="@color/primary"
+                    app:trackTint="@color/primary_light" />
+
+            </LinearLayout>
+
+            <!-- Control de Velocidad -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:alpha="@{fanControl.isOn ? 1.0f : 0.5f}">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fan_speed"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/slider_fan_speed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="12dp"
+                    android:enabled="@{fanControl.isOn}"
+                    android:value="@{fanControl.speedPercentage}"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    android:stepSize="10"
+                    app:thumbColor="@color/primary"
+                    app:trackColorActive="@color/primary"
+                    app:trackColorInactive="@color/primary_light"
+                    app:thumbStrokeColor="@color/primary"
+                    tools:value="60" />
+
+                <TextView
+                    android:id="@+id/tv_speed_value"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:text="@{String.format(`%d%%`, (int)fanControl.speedPercentage)}"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    tools:text="60%" />
+
+            </LinearLayout>
+
+            <!-- Información Adicional -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Estado de Conexión -->
+                <TextView
+                    android:id="@+id/tv_connection_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{fanControl.isConnected ? @string/connected : @string/disconnected}"
+                    android:textColor="@{fanControl.isConnected ? @color/success : @color/error}"
+                    android:textSize="12sp"
+                    android:drawableStart="@{fanControl.isConnected ? @drawable/ic_wifi : @drawable/ic_wifi_off}"
+                    android:drawablePadding="4dp"
+                    tools:text="Conectado" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <!-- Consumo de Energía -->
+                <TextView
+                    android:id="@+id/tv_power_consumption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{String.format(`%.1fW`, fanControl.powerConsumption)}"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:visibility="@{fanControl.isOn ? android.view.View.VISIBLE : android.view.View.GONE}"
+                    tools:text="45.2W" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</layout>

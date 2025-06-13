@@ -4,7 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
+import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -31,7 +31,7 @@ import java.util.Map;
  * ViewModel para el Dashboard Principal (HomeFragment)
  * Maneja la lógica de negocio para la vista de maqueta de casa y estados de dispositivos
  */
-public class HomeViewModel extends AndroidViewModel {
+public class HomeViewModel extends BaseAndroidViewModel {
 
     // Cache y base de datos
     private final DeviceCache deviceCache;
@@ -203,7 +203,7 @@ public class HomeViewModel extends AndroidViewModel {
             switch (room.getType()) {
                 case LIVING_ROOM:
                     devices.add(createDevice(room.getId() + "_light1", "Luz Principal", 
-                               DeviceType.DIMMER_LIGHT, room.getId()));
+                               DeviceType.LIGHT_DIMMER, room.getId()));
                     devices.add(createDevice(room.getId() + "_light2", "Luz Ambiente", 
                                DeviceType.RGB_LIGHT, room.getId()));
                     devices.add(createDevice(room.getId() + "_tv", "Smart TV", 
@@ -224,7 +224,7 @@ public class HomeViewModel extends AndroidViewModel {
                 case MASTER_BEDROOM:
                 case BEDROOM:
                     devices.add(createDevice(room.getId() + "_light", "Luz Principal", 
-                               DeviceType.DIMMER_LIGHT, room.getId()));
+                               DeviceType.LIGHT_DIMMER, room.getId()));
                     devices.add(createDevice(room.getId() + "_ac", "Aire Acondicionado", 
                                DeviceType.AIR_CONDITIONING, room.getId()));
                     devices.add(createDevice(room.getId() + "_blind", "Persiana", 
@@ -242,7 +242,7 @@ public class HomeViewModel extends AndroidViewModel {
 
                 case OFFICE:
                     devices.add(createDevice(room.getId() + "_light", "Luz Escritorio", 
-                               DeviceType.DIMMER_LIGHT, room.getId()));
+                               DeviceType.LIGHT_DIMMER, room.getId()));
                     devices.add(createDevice(room.getId() + "_outlet", "Enchufe Inteligente", 
                                DeviceType.SMART_OUTLET, room.getId()));
                     break;
@@ -549,14 +549,18 @@ public class HomeViewModel extends AndroidViewModel {
     /**
      * Método auxiliar para setMessage (compatibilidad)
      */
-    private void setMessage(String message) {
+    @Override
+    protected void setMessage(String message) {
+        super.setMessage(message);
         _error.setValue(message);
     }
     
     /**
      * Método auxiliar para setLoading (compatibilidad)
      */
-    private void setLoading(boolean loading) {
+    @Override
+    protected void setLoading(boolean loading) {
+        super.setLoading(loading);
         _isLoading.setValue(loading);
     }
 

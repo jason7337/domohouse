@@ -49,6 +49,72 @@
     <string name="device_count">%d dispositivos</string>
     <string name="temperature_format">%.1f°C</string>
     
+    <!-- Dispositivos -->
+    <string name="add_device">Agregar Dispositivo</string>
+    <string name="add_device_title">Agregar Dispositivo</string>
+    <string name="device_config_title">Configurar Dispositivo</string>
+    <string name="sync_in_progress">Sincronizando…</string>
+    <string name="sync_error">Error de sincronización</string>
+    <string name="offline_mode">Modo sin conexión</string>
+    <string name="total_devices">Total</string>
+    <string name="active_devices">Activos</string>
+    <string name="offline_devices">Sin conexión</string>
+    <string name="no_devices_title">No hay dispositivos</string>
+    <string name="no_devices_message">Agrega tu primer dispositivo inteligente para comenzar a controlar tu hogar</string>
+    
+    <!-- Estados de dispositivos -->
+    <string name="device_offline">Sin conexión</string>
+    <string name="device_needs_attention">Necesita atención</string>
+    <string name="device_active">Activo</string>
+    <string name="device_inactive">Inactivo</string>
+    <string name="device_connected">Conectado</string>
+    <string name="device_disconnected">Desconectado</string>
+    <string name="just_now">Ahora mismo</string>
+    <string name="minutes_ago" formatted="false">Hace %d minutos</string>
+    
+    <!-- Tipos de dispositivos -->
+    <string name="device_type_light_switch">Interruptor de Luz</string>
+    <string name="device_type_light_dimmer">Luz Regulable</string>
+    <string name="device_type_fan_switch">Interruptor de Ventilador</string>
+    <string name="device_type_fan_speed">Control de Ventilador</string>
+    <string name="device_type_temperature_sensor">Sensor de Temperatura</string>
+    <string name="device_type_humidity_sensor">Sensor de Humedad</string>
+    <string name="device_type_motion_sensor">Sensor de Movimiento</string>
+    <string name="device_type_door_sensor">Sensor de Puerta</string>
+    <string name="device_type_window_sensor">Sensor de Ventana</string>
+    <string name="device_type_smoke_detector">Detector de Humo</string>
+    <string name="device_type_smart_lock">Cerradura Inteligente</string>
+    <string name="device_type_camera">Cámara</string>
+    <string name="device_type_alarm">Sistema de Alarma</string>
+    <string name="device_type_unknown">Dispositivo Desconocido</string>
+    
+    <!-- Wizard de agregar dispositivo -->
+    <string name="step_indicator" formatted="false">Paso %d de %d</string>
+    <string name="step_select_device_type">Selecciona el tipo de dispositivo</string>
+    <string name="step_select_device_type_description">Elige qué tipo de dispositivo quieres agregar</string>
+    <string name="step_basic_info">Información básica</string>
+    <string name="step_basic_info_description">Configura el nombre y ubicación del dispositivo</string>
+    <string name="step_configuration">Configuración</string>
+    <string name="step_configuration_description">Ajusta los parámetros específicos del dispositivo</string>
+    <string name="step_test_connection">Prueba de conexión</string>
+    <string name="step_test_connection_description">Verificamos la conexión con el dispositivo</string>
+    <string name="testing_connection">Probando conexión…</string>
+    <string name="connection_successful">Conexión exitosa</string>
+    <string name="device_added_successfully">Dispositivo agregado exitosamente</string>
+    
+    <!-- Opciones de dispositivo -->
+    <string name="confirm_delete_device">¿Eliminar dispositivo?</string>
+    <string name="confirm_delete_device_message">¿Estás seguro de que quieres eliminar "%s"? Esta acción no se puede deshacer.</string>
+    <string name="delete">Eliminar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="device_offline_edit_limited">Edición limitada (dispositivo sin conexión)</string>
+    
+    <!-- Plurales -->
+    <plurals name="device_count">
+        <item quantity="one">%d dispositivo</item>
+        <item quantity="other">%d dispositivos</item>
+    </plurals>
+    
     <!-- Perfil -->
     <string name="personal_information">Información Personal</string>
     <string name="full_name">Nombre Completo</string>
@@ -73,9 +139,65 @@
     <!-- Navegación -->
     <string name="menu">Menú</string>
     
+    <!-- Control de Luces -->
+    <string name="lights_control_title">💡 Control de Iluminación</string>
+    <string name="total_lights">Total</string>
+    <string name="lights_on">Encendidas</string>
+    <string name="lights_off">Apagadas</string>
+    <string name="all_lights_on">Encender Todas</string>
+    <string name="all_lights_off">Apagar Todas</string>
+    <string name="room_all_on">Encender</string>
+    <string name="room_all_off">Apagar</string>
+    <string name="room_icon">Icono de habitación</string>
+    <string name="device_icon">Icono de dispositivo</string>
+    
+    <!-- Control de Temperatura -->
+    <string name="temperature_summary">🌡️ Resumen de Temperatura</string>
+    <string name="average_temp">Promedio</string>
+    <string name="min_temp">Mínima</string>
+    <string name="max_temp">Máxima</string>
+    <string name="temperature_history">📊 Historial de Temperatura</string>
+    <string name="period_24h">24h</string>
+    <string name="period_7d">7d</string>
+    <string name="period_30d">30d</string>
+    <string name="room_temperatures">🏠 Temperaturas por Habitación</string>
+    <string name="fan_controls">🪭 Control de Ventiladores</string>
+    <string name="fan_speed">Velocidad</string>
+    <string name="connected">Conectado</string>
+    <string name="disconnected">Desconectado</string>
+    <string name="temperature_thresholds">⚙️ Umbrales de Temperatura</string>
+    <string name="min_threshold">Temperatura Mínima</string>
+    <string name="max_threshold">Temperatura Máxima</string>
+    <string name="automatic_control">Control Automático</string>
+    <string name="save_thresholds">Guardar Configuración</string>
+    <string name="temperature_settings">Configuración de Temperatura</string>
+    
+    <!-- Alertas de Temperatura -->
+    <string name="temp_alert_high_title">Temperatura Alta</string>
+    <string name="temp_alert_high_message" formatted="false">La temperatura en %s ha alcanzado %.1f°C</string>
+    <string name="temp_alert_low_title">Temperatura Baja</string>
+    <string name="temp_alert_low_message" formatted="false">La temperatura en %s ha bajado a %.1f°C</string>
+    <string name="temp_alert_normal_title">Temperatura Normal</string>
+    <string name="temp_alert_normal_message" formatted="false">La temperatura en %s ha vuelto a la normalidad (%.1f°C)</string>
+    
+    <!-- Estados de Temperatura -->
+    <string name="temp_status_normal">Normal</string>
+    <string name="temp_status_high">Alta</string>
+    <string name="temp_status_low">Baja</string>
+    <string name="temp_status_critical_high">Crítica Alta</string>
+    <string name="temp_status_critical_low">Crítica Baja</string>
+    
+    <!-- Iconos Wi-Fi -->
+    <string name="ic_wifi_off">@drawable/ic_wifi_off</string>
+    
+    <!-- Plurales para sensores -->
+    <plurals name="temperature_sensors">
+        <item quantity="one">%d sensor</item>
+        <item quantity="other">%d sensores</item>
+    </plurals>
+    
     <!-- General -->
     <string name="loading">Cargando…</string>
-    <string name="cancel">Cancelar</string>
     <string name="ok">Aceptar</string>
     <string name="error">Error</string>
     <string name="logo_description">Logo de Domo House</string>

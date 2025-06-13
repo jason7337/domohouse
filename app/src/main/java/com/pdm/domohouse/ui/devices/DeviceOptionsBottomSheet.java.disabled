@@ -1,0 +1,294 @@
+package com.pdm.domohouse.ui.devices;
+
+import android.app.Dialog;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.pdm.domohouse.R;
+import com.pdm.domohouse.data.model.Device;
+import com.pdm.domohouse.databinding.BottomSheetDeviceOptionsBinding;
+
+/**
+ * BottomSheet que muestra opciones para un dispositivo específico
+ * Incluye opciones de editar, eliminar, duplicar y ver detalles
+ */
+public class DeviceOptionsBottomSheet extends BottomSheetDialogFragment {
+    
+    private static final String ARG_DEVICE_ID = "device_id";
+    private static final String ARG_DEVICE_NAME = "device_name";
+    private static final String ARG_DEVICE_TYPE = "device_type";
+    private static final String ARG_DEVICE_CONNECTED = "device_connected";
+    
+    private BottomSheetDeviceOptionsBinding binding;
+    private Device device;
+    private DeviceOptionsListener listener;
+
+    /**
+     * Interface para comunicar las acciones seleccionadas
+     */
+    public interface DeviceOptionsListener {
+        void onEditDevice(Device device);
+        void onDeleteDevice(Device device);
+        void onDuplicateDevice(Device device);
+    }
+
+    /**
+     * Crea una nueva instancia del BottomSheet con los datos del dispositivo
+     */
+    public static DeviceOptionsBottomSheet newInstance(Device device) {
+        DeviceOptionsBottomSheet fragment = new DeviceOptionsBottomSheet();
+        Bundle args = new Bundle();
+        args.putString(ARG_DEVICE_ID, device.getId());
+        args.putString(ARG_DEVICE_NAME, device.getName());
+        args.putString(ARG_DEVICE_TYPE, device.getType().name());
+        args.putBoolean(ARG_DEVICE_CONNECTED, device.isConnected());
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        // Reconstruir el objeto Device desde los argumentos
+        if (getArguments() != null) {
+            String deviceId = getArguments().getString(ARG_DEVICE_ID);
+            String deviceName = getArguments().getString(ARG_DEVICE_NAME);
+            String deviceType = getArguments().getString(ARG_DEVICE_TYPE);
+            boolean deviceConnected = getArguments().getBoolean(ARG_DEVICE_CONNECTED);
+            
+            // Crear un dispositivo temporal con los datos básicos necesarios
+            // En una implementación real, se obtendría el dispositivo completo del ViewModel
+            device = new Device(deviceId, deviceName, 
+                com.pdm.domohouse.data.model.DeviceType.valueOf(deviceType), "");
+            device.setConnected(deviceConnected);
+        }
+    }
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        
+        dialog.setOnShowListener(dialogInterface -> {
+            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialogInterface;
+            FrameLayout bottomSheet = bottomSheetDialog.findViewById(
+                com.google.android.material.R.id.design_bottom_sheet);
+            
+            if (bottomSheet != null) {
+                BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                behavior.setSkipCollapsed(true);
+            }
+        });
+        
+        return dialog;
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, 
+                           @Nullable Bundle savedInstanceState) {
+        binding = BottomSheetDeviceOptionsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        
+        setupDeviceInfo();
+        setupOptionButtons();
+    }
+
+    /**
+     * Configura la información del dispositivo en la cabecera
+     */
+    private void setupDeviceInfo() {
+        if (device != null) {
+            binding.textDeviceName.setText(device.getName());
+            binding.textDeviceType.setText(getDeviceTypeDisplayName(device.getType()));
+            
+            // Configurar icono del dispositivo
+            binding.iconDevice.setImageResource(getDeviceIcon(device.getType()));
+            
+            // Configurar estado de conexión
+            if (device.isConnected()) {
+                binding.textConnectionStatus.setText(R.string.device_connected);
+                binding.textConnectionStatus.setTextColor(
+                    getResources().getColor(R.color.success, null));
+                binding.iconConnectionStatus.setImageResource(R.drawable.ic_wifi);
+                binding.iconConnectionStatus.setColorFilter(
+                    getResources().getColor(R.color.success, null));
+            } else {
+                binding.textConnectionStatus.setText(R.string.device_disconnected);
+                binding.textConnectionStatus.setTextColor(
+                    getResources().getColor(R.color.error, null));
+                binding.iconConnectionStatus.setImageResource(R.drawable.ic_wifi_off);
+                binding.iconConnectionStatus.setColorFilter(
+                    getResources().getColor(R.color.error, null));
+            }
+        }
+    }
+
+    /**
+     * Configura los botones de opciones
+     */
+    private void setupOptionButtons() {
+        // Botón de editar
+        binding.optionEdit.setOnClickListener(v -> {
+            if (listener != null && device != null) {
+                listener.onEditDevice(device);
+            }
+            dismiss();
+        });
+        
+        // Botón de duplicar
+        binding.optionDuplicate.setOnClickListener(v -> {
+            if (listener != null && device != null) {
+                listener.onDuplicateDevice(device);
+            }
+            dismiss();
+        });
+        
+        // Botón de eliminar
+        binding.optionDelete.setOnClickListener(v -> {
+            showDeleteConfirmationDialog();
+        });
+        
+        // Botón de detalles (navegar a configuración completa)
+        binding.optionDetails.setOnClickListener(v -> {
+            if (listener != null && device != null) {
+                listener.onEditDevice(device); // Mismo comportamiento que editar
+            }
+            dismiss();
+        });
+        
+        // Configurar disponibilidad de opciones según el estado del dispositivo
+        updateOptionsAvailability();
+    }
+
+    /**
+     * Actualiza la disponibilidad de las opciones según el estado del dispositivo
+     */
+    private void updateOptionsAvailability() {
+        if (device != null) {
+            // Si el dispositivo no está conectado, deshabilitar ciertas opciones
+            if (!device.isConnected()) {
+                binding.optionEdit.setAlpha(0.5f);
+                binding.textEditDescription.setText(R.string.device_offline_edit_limited);
+            }
+        }
+    }
+
+    /**
+     * Muestra un diálogo de confirmación para eliminar el dispositivo
+     */
+    private void showDeleteConfirmationDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.confirm_delete_device)
+            .setMessage(getString(R.string.confirm_delete_device_message, device.getName()))
+            .setPositiveButton(R.string.delete, (dialog, which) -> {
+                if (listener != null && device != null) {
+                    listener.onDeleteDevice(device);
+                }
+                dismiss();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    /**
+     * Obtiene el nombre para mostrar del tipo de dispositivo
+     */
+    private String getDeviceTypeDisplayName(com.pdm.domohouse.data.model.DeviceType deviceType) {
+        switch (deviceType) {
+            case LIGHT_SWITCH:
+                return getString(R.string.device_type_light_switch);
+            case LIGHT_DIMMER:
+                return getString(R.string.device_type_light_dimmer);
+            case FAN_SWITCH:
+                return getString(R.string.device_type_fan_switch);
+            case FAN_SPEED:
+                return getString(R.string.device_type_fan_speed);
+            case TEMPERATURE_SENSOR:
+                return getString(R.string.device_type_temperature_sensor);
+            case HUMIDITY_SENSOR:
+                return getString(R.string.device_type_humidity_sensor);
+            case MOTION_SENSOR:
+                return getString(R.string.device_type_motion_sensor);
+            case DOOR_SENSOR:
+                return getString(R.string.device_type_door_sensor);
+            case WINDOW_SENSOR:
+                return getString(R.string.device_type_window_sensor);
+            case SMOKE_DETECTOR:
+                return getString(R.string.device_type_smoke_detector);
+            case SMART_LOCK:
+                return getString(R.string.device_type_smart_lock);
+            case CAMERA:
+                return getString(R.string.device_type_camera);
+            case ALARM:
+                return getString(R.string.device_type_alarm);
+            default:
+                return getString(R.string.device_type_unknown);
+        }
+    }
+
+    /**
+     * Obtiene el icono del dispositivo
+     */
+    private int getDeviceIcon(com.pdm.domohouse.data.model.DeviceType deviceType) {
+        switch (deviceType) {
+            case LIGHT_SWITCH:
+            case LIGHT_DIMMER:
+                return R.drawable.ic_lightbulb;
+            case FAN_SWITCH:
+            case FAN_SPEED:
+                return R.drawable.ic_fan;
+            case TEMPERATURE_SENSOR:
+                return R.drawable.ic_thermometer;
+            case HUMIDITY_SENSOR:
+                return R.drawable.ic_humidity;
+            case MOTION_SENSOR:
+                return R.drawable.ic_motion;
+            case DOOR_SENSOR:
+                return R.drawable.ic_door;
+            case WINDOW_SENSOR:
+                return R.drawable.ic_window;
+            case SMOKE_DETECTOR:
+                return R.drawable.ic_smoke;
+            case SMART_LOCK:
+                return R.drawable.ic_lock;
+            case CAMERA:
+                return R.drawable.ic_camera;
+            case ALARM:
+                return R.drawable.ic_alarm;
+            default:
+                return R.drawable.ic_device_unknown;
+        }
+    }
+
+    /**
+     * Establece el listener para las opciones
+     */
+    public void setDeviceOptionsListener(DeviceOptionsListener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+}

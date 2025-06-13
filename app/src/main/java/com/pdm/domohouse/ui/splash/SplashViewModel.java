@@ -1,18 +1,20 @@
 package com.pdm.domohouse.ui.splash;
 
+import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.pdm.domohouse.ui.base.BaseViewModel;
+import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 
 /**
  * ViewModel para la pantalla Splash
  * Maneja la lógica de inicio y navegación inicial
  */
-public class SplashViewModel extends BaseViewModel {
+public class SplashViewModel extends BaseAndroidViewModel {
     
     // Tiempo de duración del splash en milisegundos
     private static final long SPLASH_DURATION = 2000;
@@ -35,8 +37,8 @@ public class SplashViewModel extends BaseViewModel {
     /**
      * Constructor
      */
-    public SplashViewModel() {
-        super();
+    public SplashViewModel(@NonNull Application application) {
+        super(application);
         startSplashTimer();
     }
     
