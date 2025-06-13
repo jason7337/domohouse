@@ -35,7 +35,7 @@ public abstract class BaseAndroidViewModel extends AndroidViewModel {
      * @param loading true si está cargando, false en caso contrario
      */
     protected void setLoading(boolean loading) {
-        _isLoading.setValue(loading);
+        _isLoading.postValue(loading);
     }
     
     /**
@@ -43,14 +43,14 @@ public abstract class BaseAndroidViewModel extends AndroidViewModel {
      * @param message Mensaje de error a mostrar
      */
     protected void setError(String message) {
-        _errorMessage.setValue(message);
+        _errorMessage.postValue(message);
     }
     
     /**
      * Limpia el mensaje de error
      */
     protected void clearError() {
-        _errorMessage.setValue(null);
+        _errorMessage.postValue(null);
     }
     
     // LiveData para manejar mensajes informativos
@@ -62,6 +62,6 @@ public abstract class BaseAndroidViewModel extends AndroidViewModel {
      * @param message El mensaje informativo a mostrar
      */
     protected void setMessage(String message) {
-        _message.setValue(message);
+        _message.postValue(message);
     }
 }

@@ -18,79 +18,154 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
+            android:paddingTop="40dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp"
             tools:context=".ui.home.HomeFragment">
 
-            <!-- Título del Dashboard -->
-            <TextView
-                android:id="@+id/welcomeTextView"
+            <!-- Header del Dashboard Mejorado -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/headerCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/dashboard_welcome"
-                android:textColor="@color/text_primary"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:gravity="start"
-                app:layout_constraintEnd_toStartOf="@+id/refreshButton"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <!-- Botón de menú -->
-            <ImageButton
-                android:id="@+id/menuButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/menu"
-                android:padding="8dp"
-                android:src="@drawable/ic_menu"
-                app:layout_constraintBottom_toBottomOf="@+id/welcomeTextView"
-                app:layout_constraintEnd_toStartOf="@+id/refreshButton"
-                app:layout_constraintTop_toTopOf="@+id/welcomeTextView"
-                app:tint="@color/primary" />
-
-            <!-- Botón de actualizar -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/refreshButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/primary"
-                android:contentDescription="@string/refresh_data"
-                android:src="@android:drawable/ic_menu_rotate"
-                app:fabSize="mini"
+                app:cardBackgroundColor="@color/primary"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/welcomeTextView"
-                app:layout_constraintBottom_toBottomOf="@+id/welcomeTextView" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-            <!-- Tarjeta de Estadísticas -->
-            <androidx.cardview.widget.CardView
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center_vertical">
+
+                    <!-- Logo pequeno en el header -->
+                    <FrameLayout
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/logo_border"
+                        android:backgroundTint="@color/white">
+
+                        <ImageView
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/domo_house_logo"
+                            android:scaleType="centerInside" />
+
+                    </FrameLayout>
+
+                    <!-- Header del Dashboard -->
+                    <LinearLayout
+                        android:id="@+id/dashboardHeader"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bienvenido!"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                            android:alpha="0.9" />
+
+                        <TextView
+                            android:id="@+id/welcomeTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dashboard_welcome"
+                            android:textColor="@color/white"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="2dp" />
+
+                    </LinearLayout>
+
+                    <!-- Boton de menu -->
+                    <ImageButton
+                        android:id="@+id/menuButton"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/pin_background"
+                        android:backgroundTint="@color/white"
+                        android:contentDescription="@string/menu"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_menu"
+                        app:tint="@color/primary" />
+
+                    <!-- Boton de actualizar -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/refreshButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/white"
+                        android:contentDescription="@string/refresh_data"
+                        android:src="@android:drawable/ic_menu_rotate"
+                        app:fabSize="mini"
+                        app:tint="@color/primary" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Tarjeta de Estadisticas -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/statsCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:strokeColor="@color/primary_light"
+                app:strokeWidth="1dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/welcomeTextView">
+                app:layout_constraintTop_toBottomOf="@+id/headerCard">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
-                    <TextView
-                        android:id="@+id/statsTitle"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/dashboard_stats_title"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:id="@+id/statsTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/dashboard_stats_title"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="En vivo"
+                            android:textColor="@color/success"
+                            android:textSize="12sp"
+                            android:background="@drawable/pin_background"
+                            android:backgroundTint="@color/success_light"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp" />
+
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -99,133 +174,183 @@
                         android:weightSum="4">
 
                         <!-- Habitaciones Activas -->
-                        <LinearLayout
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/surface_elevated"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="2dp">
 
-                            <TextView
-                                android:id="@+id/activeRoomsValue"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0"
-                                android:textColor="@color/primary"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="5" />
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="12dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/rooms_active"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:gravity="center" />
+                                <TextView
+                                    android:id="@+id/activeRoomsValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:textColor="@color/primary"
+                                    android:textSize="28sp"
+                                    android:textStyle="bold"
+                                    tools:text="5" />
 
-                        </LinearLayout>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/rooms_active"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:gravity="center"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
 
                         <!-- Dispositivos Conectados -->
-                        <LinearLayout
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/surface_elevated"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="2dp">
 
-                            <TextView
-                                android:id="@+id/connectedDevicesValue"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0"
-                                android:textColor="@color/success"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="24" />
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="12dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/devices_connected"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:gravity="center" />
+                                <TextView
+                                    android:id="@+id/connectedDevicesValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:textColor="@color/success"
+                                    android:textSize="28sp"
+                                    android:textStyle="bold"
+                                    tools:text="24" />
 
-                        </LinearLayout>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/devices_connected"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:gravity="center"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
 
                         <!-- Temperatura Promedio -->
-                        <LinearLayout
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/surface_elevated"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="2dp">
 
-                            <TextView
-                                android:id="@+id/avgTemperatureValue"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0°C"
-                                android:textColor="@color/warning"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="23.5°C" />
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="12dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/temperature_avg"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:gravity="center" />
+                                <TextView
+                                    android:id="@+id/avgTemperatureValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0°C"
+                                    android:textColor="@color/warning"
+                                    android:textSize="28sp"
+                                    android:textStyle="bold"
+                                    tools:text="23.5°C" />
 
-                        </LinearLayout>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/temperature_avg"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:gravity="center"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
 
                         <!-- Alertas -->
-                        <LinearLayout
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/surface_elevated"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="2dp">
 
-                            <TextView
-                                android:id="@+id/alertsValue"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0"
-                                android:textColor="@color/error"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="2" />
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="12dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/alerts_count"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:gravity="center" />
+                                <TextView
+                                    android:id="@+id/alertsValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:textColor="@color/error"
+                                    android:textSize="28sp"
+                                    android:textStyle="bold"
+                                    tools:text="2" />
 
-                        </LinearLayout>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/alerts_count"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp"
+                                    android:gravity="center"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
 
                     </LinearLayout>
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Vista de Maqueta de Casa -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/houseMapCard"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/background"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:strokeColor="@color/primary_light"
+                app:strokeWidth="1dp"
                 app:layout_constraintBottom_toTopOf="@+id/roomDetailsCard"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -237,17 +362,19 @@
                     android:layout_height="match_parent"
                     android:layout_margin="8dp" />
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Detalles de Habitación Seleccionada -->
-            <androidx.cardview.widget.CardView
+            <!-- Detalles de Habitacion Seleccionada -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/roomDetailsCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:strokeColor="@color/secondary_light"
+                app:strokeWidth="1dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -271,7 +398,7 @@
                             android:layout_height="wrap_content"
                             android:textSize="24sp"
                             android:layout_marginEnd="8dp"
-                            tools:text="🛏️" />
+                            tools:text="Room" />
 
                         <TextView
                             android:id="@+id/roomName"
@@ -387,7 +514,7 @@
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Indicador de carga -->
             <ProgressBar

@@ -94,7 +94,7 @@ public class SyncManager {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean connected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        isOnline.setValue(connected);
+        isOnline.postValue(connected);
         
         if (connected) {
             // Sincronizar automáticamente al recuperar conexión
@@ -116,11 +116,11 @@ public class SyncManager {
      */
     public void syncAll() {
         if (!isOnline() || firebaseAuth.getCurrentUser() == null) {
-            syncStatus.setValue(SyncStatus.ERROR);
+            syncStatus.postValue(SyncStatus.ERROR);
             return;
         }
         
-        syncStatus.setValue(SyncStatus.SYNCING);
+        syncStatus.postValue(SyncStatus.SYNCING);
         executorService.execute(() -> {
             try {
                 syncUserProfile();
@@ -142,42 +142,47 @@ public class SyncManager {
      */
     private void syncUserProfile() {
         String userId = firebaseAuth.getCurrentUser().getUid();
-        UserProfileEntity localProfile = database.userProfileDao().getUserProfileSync(userId);
         DatabaseReference profileRef = firebaseDatabase.getReference("users").child(userId).child("profile");
         
-        profileRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    UserProfile remoteProfile = snapshot.getValue(UserProfile.class);
-                    
-                    if (localProfile == null) {
-                        // No hay datos locales, usar remotos
-                        UserProfileEntity newProfile = convertToEntity(remoteProfile);
-                        newProfile.setSynced(true);
-                        newProfile.setLastSync(System.currentTimeMillis());
-                        database.userProfileDao().insert(newProfile);
-                    } else {
-                        // Resolver conflictos
-                        UserProfileEntity resolvedProfile = resolveProfileConflict(localProfile, remoteProfile);
-                        database.userProfileDao().update(resolvedProfile);
-                        
-                        // Actualizar en Firebase si es necesario
-                        if (!localProfile.isSynced()) {
-                            profileRef.setValue(convertToModel(resolvedProfile));
-                        }
-                    }
-                } else if (localProfile != null && !localProfile.isSynced()) {
-                    // Datos locales sin sincronizar, subir a Firebase
-                    profileRef.setValue(convertToModel(localProfile));
-                    database.userProfileDao().markAsSynced(userId, System.currentTimeMillis());
-                }
-            }
+        executorService.execute(() -> {
+            UserProfileEntity localProfile = database.userProfileDao().getUserProfileSync(userId);
             
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(TAG, "Error sincronizando perfil", error.toException());
-            }
+            profileRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    executorService.execute(() -> {
+                        if (snapshot.exists()) {
+                            UserProfile remoteProfile = snapshot.getValue(UserProfile.class);
+                            
+                            if (localProfile == null) {
+                                // No hay datos locales, usar remotos
+                                UserProfileEntity newProfile = convertToEntity(remoteProfile);
+                                newProfile.setSynced(true);
+                                newProfile.setLastSync(System.currentTimeMillis());
+                                database.userProfileDao().insert(newProfile);
+                            } else {
+                                // Resolver conflictos
+                                UserProfileEntity resolvedProfile = resolveProfileConflict(localProfile, remoteProfile);
+                                database.userProfileDao().update(resolvedProfile);
+                                
+                                // Actualizar en Firebase si es necesario
+                                if (!localProfile.isSynced()) {
+                                    profileRef.setValue(convertToModel(resolvedProfile));
+                                }
+                            }
+                        } else if (localProfile != null && !localProfile.isSynced()) {
+                            // Datos locales sin sincronizar, subir a Firebase
+                            profileRef.setValue(convertToModel(localProfile));
+                            database.userProfileDao().markAsSynced(userId, System.currentTimeMillis());
+                        }
+                    });
+                }
+                
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.e(TAG, "Error sincronizando perfil", error.toException());
+                }
+            });
         });
     }
     
@@ -186,39 +191,44 @@ public class SyncManager {
      */
     private void syncUserPreferences() {
         String userId = firebaseAuth.getCurrentUser().getUid();
-        UserPreferencesEntity localPrefs = database.userPreferencesDao().getUserPreferencesSync(userId);
         DatabaseReference prefsRef = firebaseDatabase.getReference("users").child(userId).child("preferences");
         
-        prefsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    UserPreferences remotePrefs = snapshot.getValue(UserPreferences.class);
-                    
-                    if (localPrefs == null) {
-                        UserPreferencesEntity newPrefs = convertToEntity(remotePrefs);
-                        newPrefs.setUserId(userId);
-                        newPrefs.setSynced(true);
-                        newPrefs.setLastSync(System.currentTimeMillis());
-                        database.userPreferencesDao().insert(newPrefs);
-                    } else {
-                        UserPreferencesEntity resolvedPrefs = resolvePreferencesConflict(localPrefs, remotePrefs);
-                        database.userPreferencesDao().update(resolvedPrefs);
-                        
-                        if (!localPrefs.isSynced()) {
-                            prefsRef.setValue(convertToModel(resolvedPrefs));
-                        }
-                    }
-                } else if (localPrefs != null && !localPrefs.isSynced()) {
-                    prefsRef.setValue(convertToModel(localPrefs));
-                    database.userPreferencesDao().markAsSynced(userId, System.currentTimeMillis());
-                }
-            }
+        executorService.execute(() -> {
+            UserPreferencesEntity localPrefs = database.userPreferencesDao().getUserPreferencesSync(userId);
             
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(TAG, "Error sincronizando preferencias", error.toException());
-            }
+            prefsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    executorService.execute(() -> {
+                        if (snapshot.exists()) {
+                            UserPreferences remotePrefs = snapshot.getValue(UserPreferences.class);
+                            
+                            if (localPrefs == null) {
+                                UserPreferencesEntity newPrefs = convertToEntity(remotePrefs);
+                                newPrefs.setUserId(userId);
+                                newPrefs.setSynced(true);
+                                newPrefs.setLastSync(System.currentTimeMillis());
+                                database.userPreferencesDao().insert(newPrefs);
+                            } else {
+                                UserPreferencesEntity resolvedPrefs = resolvePreferencesConflict(localPrefs, remotePrefs);
+                                database.userPreferencesDao().update(resolvedPrefs);
+                                
+                                if (!localPrefs.isSynced()) {
+                                    prefsRef.setValue(convertToModel(resolvedPrefs));
+                                }
+                            }
+                        } else if (localPrefs != null && !localPrefs.isSynced()) {
+                            prefsRef.setValue(convertToModel(localPrefs));
+                            database.userPreferencesDao().markAsSynced(userId, System.currentTimeMillis());
+                        }
+                    });
+                }
+                
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.e(TAG, "Error sincronizando preferencias", error.toException());
+                }
+            });
         });
     }
     
@@ -226,40 +236,46 @@ public class SyncManager {
      * Sincroniza las habitaciones
      */
     private void syncRooms() {
-        List<RoomEntity> unsyncedRooms = database.roomDao().getUnsyncedRooms();
-        DatabaseReference roomsRef = firebaseDatabase.getReference("rooms");
-        
-        // Subir habitaciones no sincronizadas
-        for (RoomEntity room : unsyncedRooms) {
-            roomsRef.child(room.getRoomId()).setValue(convertToMap(room))
-                    .addOnSuccessListener(aVoid -> {
-                        database.roomDao().markAsSynced(room.getRoomId(), System.currentTimeMillis());
-                    });
-        }
-        
-        // Descargar habitaciones de Firebase
-        roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                List<RoomEntity> remoteRooms = new ArrayList<>();
-                for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
-                    RoomEntity room = roomSnapshot.getValue(RoomEntity.class);
-                    if (room != null) {
-                        room.setSynced(true);
-                        room.setLastSync(System.currentTimeMillis());
-                        remoteRooms.add(room);
-                    }
-                }
-                
-                if (!remoteRooms.isEmpty()) {
-                    database.roomDao().insertAll(remoteRooms);
-                }
+        executorService.execute(() -> {
+            List<RoomEntity> unsyncedRooms = database.roomDao().getUnsyncedRooms();
+            DatabaseReference roomsRef = firebaseDatabase.getReference("rooms");
+            
+            // Subir habitaciones no sincronizadas
+            for (RoomEntity room : unsyncedRooms) {
+                roomsRef.child(room.getRoomId()).setValue(convertToMap(room))
+                        .addOnSuccessListener(aVoid -> {
+                            executorService.execute(() -> {
+                                database.roomDao().markAsSynced(room.getRoomId(), System.currentTimeMillis());
+                            });
+                        });
             }
             
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(TAG, "Error sincronizando habitaciones", error.toException());
-            }
+            // Descargar habitaciones de Firebase
+            roomsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    executorService.execute(() -> {
+                        List<RoomEntity> remoteRooms = new ArrayList<>();
+                        for (DataSnapshot roomSnapshot : snapshot.getChildren()) {
+                            RoomEntity room = roomSnapshot.getValue(RoomEntity.class);
+                            if (room != null) {
+                                room.setSynced(true);
+                                room.setLastSync(System.currentTimeMillis());
+                                remoteRooms.add(room);
+                            }
+                        }
+                        
+                        if (!remoteRooms.isEmpty()) {
+                            database.roomDao().insertAll(remoteRooms);
+                        }
+                    });
+                }
+                
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.e(TAG, "Error sincronizando habitaciones", error.toException());
+                }
+            });
         });
     }
     
@@ -267,48 +283,54 @@ public class SyncManager {
      * Sincroniza los dispositivos
      */
     private void syncDevices() {
-        List<DeviceEntity> unsyncedDevices = database.deviceDao().getUnsyncedDevices();
-        DatabaseReference devicesRef = firebaseDatabase.getReference("devices");
-        
-        // Subir dispositivos no sincronizados
-        for (DeviceEntity device : unsyncedDevices) {
-            devicesRef.child(device.getDeviceId()).setValue(convertToMap(device))
-                    .addOnSuccessListener(aVoid -> {
-                        database.deviceDao().markAsSynced(device.getDeviceId(), System.currentTimeMillis());
-                    });
-        }
-        
-        // Descargar dispositivos de Firebase
-        devicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                List<DeviceEntity> remoteDevices = new ArrayList<>();
-                for (DataSnapshot deviceSnapshot : snapshot.getChildren()) {
-                    DeviceEntity device = deviceSnapshot.getValue(DeviceEntity.class);
-                    if (device != null) {
-                        DeviceEntity localDevice = database.deviceDao().getDeviceSync(device.getDeviceId());
-                        
-                        if (localDevice != null) {
-                            // Resolver conflictos
-                            DeviceEntity resolved = resolveDeviceConflict(localDevice, device);
-                            database.deviceDao().update(resolved);
-                        } else {
-                            device.setSynced(true);
-                            device.setLastSync(System.currentTimeMillis());
-                            remoteDevices.add(device);
-                        }
-                    }
-                }
-                
-                if (!remoteDevices.isEmpty()) {
-                    database.deviceDao().insertAll(remoteDevices);
-                }
+        executorService.execute(() -> {
+            List<DeviceEntity> unsyncedDevices = database.deviceDao().getUnsyncedDevices();
+            DatabaseReference devicesRef = firebaseDatabase.getReference("devices");
+            
+            // Subir dispositivos no sincronizados
+            for (DeviceEntity device : unsyncedDevices) {
+                devicesRef.child(device.getDeviceId()).setValue(convertToMap(device))
+                        .addOnSuccessListener(aVoid -> {
+                            executorService.execute(() -> {
+                                database.deviceDao().markAsSynced(device.getDeviceId(), System.currentTimeMillis());
+                            });
+                        });
             }
             
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(TAG, "Error sincronizando dispositivos", error.toException());
-            }
+            // Descargar dispositivos de Firebase
+            devicesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    executorService.execute(() -> {
+                        List<DeviceEntity> remoteDevices = new ArrayList<>();
+                        for (DataSnapshot deviceSnapshot : snapshot.getChildren()) {
+                            DeviceEntity device = deviceSnapshot.getValue(DeviceEntity.class);
+                            if (device != null) {
+                                DeviceEntity localDevice = database.deviceDao().getDeviceSync(device.getDeviceId());
+                                
+                                if (localDevice != null) {
+                                    // Resolver conflictos
+                                    DeviceEntity resolved = resolveDeviceConflict(localDevice, device);
+                                    database.deviceDao().update(resolved);
+                                } else {
+                                    device.setSynced(true);
+                                    device.setLastSync(System.currentTimeMillis());
+                                    remoteDevices.add(device);
+                                }
+                            }
+                        }
+                        
+                        if (!remoteDevices.isEmpty()) {
+                            database.deviceDao().insertAll(remoteDevices);
+                        }
+                    });
+                }
+                
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.e(TAG, "Error sincronizando dispositivos", error.toException());
+                }
+            });
         });
     }
     
@@ -316,23 +338,29 @@ public class SyncManager {
      * Sincroniza el historial de dispositivos
      */
     private void syncDeviceHistory() {
-        List<DeviceHistoryEntity> unsyncedHistory = database.deviceHistoryDao().getUnsyncedHistory();
-        DatabaseReference historyRef = firebaseDatabase.getReference("device_history");
-        
-        List<Long> syncedIds = new ArrayList<>();
-        
-        for (DeviceHistoryEntity history : unsyncedHistory) {
-            String key = historyRef.push().getKey();
-            if (key != null) {
-                historyRef.child(key).setValue(convertToMap(history))
-                        .addOnSuccessListener(aVoid -> {
-                            syncedIds.add(history.getHistoryId());
-                            if (syncedIds.size() == unsyncedHistory.size()) {
-                                database.deviceHistoryDao().markAsSynced(syncedIds, System.currentTimeMillis());
-                            }
-                        });
+        executorService.execute(() -> {
+            List<DeviceHistoryEntity> unsyncedHistory = database.deviceHistoryDao().getUnsyncedHistory();
+            DatabaseReference historyRef = firebaseDatabase.getReference("device_history");
+            
+            List<Long> syncedIds = new ArrayList<>();
+            
+            for (DeviceHistoryEntity history : unsyncedHistory) {
+                String key = historyRef.push().getKey();
+                if (key != null) {
+                    historyRef.child(key).setValue(convertToMap(history))
+                            .addOnSuccessListener(aVoid -> {
+                                synchronized (syncedIds) {
+                                    syncedIds.add(history.getHistoryId());
+                                    if (syncedIds.size() == unsyncedHistory.size()) {
+                                        executorService.execute(() -> {
+                                            database.deviceHistoryDao().markAsSynced(syncedIds, System.currentTimeMillis());
+                                        });
+                                    }
+                                }
+                            });
+                }
             }
-        }
+        });
     }
     
     /**

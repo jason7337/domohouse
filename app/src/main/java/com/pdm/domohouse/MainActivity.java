@@ -31,11 +31,11 @@ public class MainActivity extends AppCompatActivity {
         // Inicializar Bottom Navigation primero
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         
-        // Configurar Navigation Component
-        setupNavigation();
-        
-        // Configurar Bottom Navigation
-        setupBottomNavigation();
+        // Configurar Navigation Component en el próximo ciclo de UI para asegurar que el FragmentContainerView esté listo
+        findViewById(R.id.nav_host_fragment).post(() -> {
+            setupNavigation();
+            setupBottomNavigation();
+        });
     }
     
     /**
@@ -89,10 +89,9 @@ public class MainActivity extends AppCompatActivity {
     
     @Override
     public boolean onSupportNavigateUp() {
-        // Manejar el botón de navegación hacia arriba
+        // Manejar el botón de navegación hacia arriba - simplificado para evitar errores de ActionBar
         if (navController != null) {
-            return NavigationUI.navigateUp(navController, appBarConfiguration)
-                    || super.onSupportNavigateUp();
+            return navController.navigateUp() || super.onSupportNavigateUp();
         }
         return super.onSupportNavigateUp();
     }

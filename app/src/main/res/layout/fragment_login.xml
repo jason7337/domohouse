@@ -20,20 +20,34 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="24dp"
+            android:paddingTop="40dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="24dp"
             tools:context=".ui.auth.LoginFragment">
 
-            <!-- Logo -->
-            <ImageView
-                android:id="@+id/logoImageView"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+            <!-- Container para el logo con borde -->
+            <FrameLayout
+                android:id="@+id/logoContainer"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
                 android:layout_marginTop="32dp"
-                android:src="@drawable/domo_house_logo"
-                android:contentDescription="@string/app_name"
+                android:background="@drawable/logo_border"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent">
+
+                <!-- Logo -->
+                <ImageView
+                    android:id="@+id/logoImageView"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/domo_house_logo"
+                    android:contentDescription="@string/app_name"
+                    android:scaleType="centerInside" />
+
+            </FrameLayout>
 
             <!-- Título -->
             <TextView
@@ -47,7 +61,7 @@
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/logoImageView" />
+                app:layout_constraintTop_toBottomOf="@+id/logoContainer" />
 
             <!-- Card contenedor del formulario -->
             <com.google.android.material.card.MaterialCardView

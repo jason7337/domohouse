@@ -42,24 +42,78 @@ public class ProfileViewModel extends BaseAndroidViewModel {
     }
     
     /**
-     * Carga el perfil del usuario (datos de ejemplo para esta sesión)
+     * Carga el perfil del usuario (datos reales del usuario en sesión)
      */
     public void loadUserProfile() {
         setLoading(true);
         
-        // Crear perfil de ejemplo para la demostración
-        UserProfile exampleProfile = new UserProfile("user123", "Juan Pérez", "juan.perez@ejemplo.com");
-        exampleProfile.setProfilePhotoUrl(""); // Sin foto por defecto
+        // TODO: En producción, obtener datos del usuario autenticado desde Firebase Auth
+        // Para esta demo, simular datos del usuario actual de la sesión
         
-        // Configurar preferencias por defecto
-        exampleProfile.getPreferences().setNotificationsEnabled(true);
-        exampleProfile.getPreferences().setAutoModeEnabled(true);
-        exampleProfile.getPreferences().setAnalyticsEnabled(false);
+        // Obtener datos del usuario autenticado (simulado)
+        String currentUserId = getCurrentUserId();
+        String currentUserEmail = getCurrentUserEmail();
+        String currentUserName = getCurrentUserName();
         
-        _userProfile.setValue(exampleProfile);
-        originalProfile = cloneProfile(exampleProfile);
+        // Crear perfil con datos del usuario real
+        UserProfile realProfile = new UserProfile(currentUserId, currentUserName, currentUserEmail);
+        
+        // Obtener foto de perfil si existe
+        String photoUrl = getCurrentUserPhotoUrl();
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            realProfile.setProfilePhotoUrl(photoUrl);
+        }
+        
+        // Cargar preferencias guardadas
+        loadUserPreferences(realProfile);
+        
+        _userProfile.setValue(realProfile);
+        originalProfile = cloneProfile(realProfile);
         
         setLoading(false);
+    }
+    
+    /**
+     * Obtiene el ID del usuario actual (simulado - en producción usar Firebase Auth)
+     */
+    private String getCurrentUserId() {
+        // TODO: Implementar con Firebase Auth
+        return "user_" + System.currentTimeMillis();
+    }
+    
+    /**
+     * Obtiene el email del usuario actual (simulado - en producción usar Firebase Auth)
+     */
+    private String getCurrentUserEmail() {
+        // TODO: Implementar con Firebase Auth
+        return "usuario@domohouse.com";
+    }
+    
+    /**
+     * Obtiene el nombre del usuario actual (simulado - en producción usar Firebase Auth)
+     */
+    private String getCurrentUserName() {
+        // TODO: Implementar con Firebase Auth
+        return "Usuario DomoHouse";
+    }
+    
+    /**
+     * Obtiene la URL de la foto del usuario actual (simulado - en producción usar Firebase Auth)
+     */
+    private String getCurrentUserPhotoUrl() {
+        // TODO: Implementar con Firebase Auth
+        return null; // Por defecto sin foto
+    }
+    
+    /**
+     * Carga las preferencias del usuario desde almacenamiento local
+     */
+    private void loadUserPreferences(UserProfile profile) {
+        // TODO: Implementar carga desde SharedPreferences o base de datos local
+        // Por ahora usar valores por defecto
+        profile.getPreferences().setNotificationsEnabled(true);
+        profile.getPreferences().setAutoModeEnabled(false);
+        profile.getPreferences().setAnalyticsEnabled(true);
     }
     
     /**

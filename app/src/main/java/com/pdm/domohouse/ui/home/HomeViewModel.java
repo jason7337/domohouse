@@ -125,22 +125,22 @@ public class HomeViewModel extends BaseAndroidViewModel {
         syncManager.getSyncStatus().observeForever(status -> {
             switch (status) {
                 case SYNCING:
-                    _isSyncing.setValue(true);
+                    _isSyncing.postValue(true);
                     break;
                 case SUCCESS:
-                    _isSyncing.setValue(false);
-                    _error.setValue(null);
+                    _isSyncing.postValue(false);
+                    _error.postValue(null);
                     break;
                 case ERROR:
-                    _isSyncing.setValue(false);
-                    _error.setValue("Error de sincronización");
+                    _isSyncing.postValue(false);
+                    _error.postValue("Error de sincronización");
                     break;
                 case CONFLICT:
-                    _isSyncing.setValue(false);
-                    _error.setValue("Conflictos de sincronización detectados");
+                    _isSyncing.postValue(false);
+                    _error.postValue("Conflictos de sincronización detectados");
                     break;
                 default:
-                    _isSyncing.setValue(false);
+                    _isSyncing.postValue(false);
                     break;
             }
         });

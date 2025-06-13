@@ -1,29 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors -->
-    <color name="primary">#D4A574</color>
-    <color name="primary_dark">#B8935F</color>
-    <color name="primary_light">#E5C3A0</color>
+    <!-- Primary Colors - Modern Gradient Scheme -->
+    <color name="primary">#6366F1</color>           <!-- Indigo 500 - Principal -->
+    <color name="primary_dark">#4F46E5</color>      <!-- Indigo 600 - Oscuro -->
+    <color name="primary_light">#A5B4FC</color>     <!-- Indigo 300 - Claro -->
+    <color name="primary_variant">#818CF8</color>   <!-- Indigo 400 - Variante -->
     
-    <!-- Background Colors -->
-    <color name="background">#FFFFFF</color>
-    <color name="surface">#F5F5F5</color>
+    <!-- Secondary Colors - Warm Accent -->
+    <color name="secondary">#F59E0B</color>         <!-- Amber 500 - Secundario -->
+    <color name="secondary_dark">#D97706</color>    <!-- Amber 600 - Oscuro -->
+    <color name="secondary_light">#FCD34D</color>   <!-- Amber 300 - Claro -->
     
-    <!-- Text Colors -->
-    <color name="text_primary">#1A1F2E</color>
-    <color name="text_secondary">#666666</color>
+    <!-- Background Colors - Dark Theme Friendly -->
+    <color name="background">#1E293B</color>        <!-- Dark slate background -->
+    <color name="surface">#334155</color>           <!-- Lighter dark surface -->
+    <color name="surface_variant">#475569</color>   <!-- Slate 600 -->
+    <color name="surface_elevated">#3F4B5C</color>  <!-- Elevated dark surface -->
     
-    <!-- Status Colors -->
-    <color name="success">#4CAF50</color>
-    <color name="warning">#FF9800</color>
-    <color name="error">#F44336</color>
-    <color name="info">#2196F3</color>
+    <!-- Text Colors - Light for Dark Backgrounds -->
+    <color name="text_primary">#F8FAFC</color>      <!-- Light slate for readability -->
+    <color name="text_secondary">#CBD5E1</color>    <!-- Lighter slate 300 -->
+    <color name="text_tertiary">#94A3B8</color>     <!-- Slate 400 -->
+    <color name="text_on_primary">#FFFFFF</color>   <!-- White on primary -->
     
-    <!-- Additional Colors -->
-    <color name="divider">#E0E0E0</color>
-    <color name="surface_variant">#F8F8F8</color>
+    <!-- Status Colors - Modern & Vibrant -->
+    <color name="success">#10B981</color>           <!-- Emerald 500 -->
+    <color name="success_light">#6EE7B7</color>     <!-- Emerald 300 -->
+    <color name="warning">#F59E0B</color>           <!-- Amber 500 -->
+    <color name="warning_light">#FCD34D</color>     <!-- Amber 300 -->
+    <color name="error">#EF4444</color>             <!-- Red 500 -->
+    <color name="error_light">#FCA5A5</color>       <!-- Red 300 -->
+    <color name="info">#3B82F6</color>              <!-- Blue 500 -->
+    <color name="info_light">#93C5FD</color>        <!-- Blue 300 -->
+    
+    <!-- Border & Divider Colors -->
+    <color name="border">#E2E8F0</color>            <!-- Slate 200 -->
+    <color name="divider">#CBD5E1</color>           <!-- Slate 300 -->
+    <color name="outline">#94A3B8</color>           <!-- Slate 400 -->
+    
+    <!-- Smart Home Specific Colors -->
+    <color name="device_on">#10B981</color>         <!-- Green for ON state -->
+    <color name="device_off">#6B7280</color>        <!-- Gray for OFF state -->
+    <color name="temperature_cold">#3B82F6</color>  <!-- Blue for cold -->
+    <color name="temperature_warm">#F59E0B</color>  <!-- Amber for warm -->
+    <color name="temperature_hot">#EF4444</color>   <!-- Red for hot -->
+    
+    <!-- Button Colors -->
+    <color name="button_primary">#6366F1</color>    <!-- Primary button -->
+    <color name="button_secondary">#475569</color>  <!-- Dark secondary button bg -->
+    <color name="button_text_secondary">#F8FAFC</color> <!-- Light secondary button text -->
+    <color name="button_disabled">#64748B</color>   <!-- Disabled button -->
+    
+    <!-- Card & Component Colors -->
+    <color name="card_background">#334155</color>   <!-- Dark card background -->
+    <color name="card_shadow">#0F172A40</color>     <!-- Darker shadow -->
+    <color name="input_background">#475569</color>  <!-- Dark input background -->
+    <color name="input_border">#64748B</color>      <!-- Lighter border -->
+    <color name="input_focus">#6366F1</color>       <!-- Input field focus -->
+    
+    <!-- Bottom Navigation Colors -->
+    <color name="bottom_nav_selected">#6366F1</color>   <!-- Selected item -->
+    <color name="bottom_nav_unselected">#94A3B8</color> <!-- Unselected item -->
+    <color name="bottom_nav_background">#334155</color> <!-- Dark background -->
     
     <!-- Legacy Colors -->
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
 </resources>
