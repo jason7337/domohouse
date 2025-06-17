@@ -1,34 +1,113 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- 🎨 TEMA CLARO MODERNO - DOMOHOUSE -->
+    <!-- Base application theme con Material Design 3 -->
     <style name="Base.Theme.DomoHouse" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Primary brand color -->
+        <!-- Colores Primarios - Azul Moderno -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/primary_light</item>
+        <item name="colorOnPrimaryContainer">@color/primary_dark</item>
         
-        <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/primary_light</item>
-        <item name="colorSecondaryVariant">@color/primary</item>
-        <item name="colorOnSecondary">@color/text_primary</item>
+        <!-- Colores Secundarios - Verde Tecnológico -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/secondary_light</item>
+        <item name="colorOnSecondaryContainer">@color/secondary_dark</item>
         
-        <!-- Background colors -->
+        <!-- Colores de Fondo y Superficie -->
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnBackground">@color/text_primary</item>
         <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
         
-        <!-- Status bar color -->
-        <item name="android:statusBarColor">@color/background</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <!-- Status Bar - Configuración para tema claro -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         
-        <!-- Error color -->
+        <!-- Error y Estados -->
         <item name="colorError">@color/error</item>
         <item name="colorOnError">@color/white</item>
+        <item name="colorErrorContainer">@color/error_background</item>
+        <item name="colorOnErrorContainer">@color/error</item>
         
-        <!-- Text colors -->
+        <!-- Colores de Texto -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorTertiary">@color/text_tertiary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- Colores de Contorno y Divisores -->
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/divider</item>
+        
+        <!-- Elevación y Sombras -->
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="android:ambientShadowAlpha">0.15</item>
+        <item name="android:spotShadowAlpha">0.25</item>
+        
+        <!-- Configuración de Ventana -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">true</item>
+        
+        <!-- Ripple Effects -->
+        <item name="android:colorControlHighlight">@color/ripple</item>
+        <item name="colorControlHighlight">@color/ripple_primary</item>
+        
+        <!-- Font Family - Usar la fuente del sistema -->
+        <!-- Se usará la fuente por defecto del sistema -->
     </style>
 
-    <style name="Theme.DomoHouse" parent="Base.Theme.DomoHouse" />
+    <!-- Tema Principal de la Aplicación -->
+    <style name="Theme.DomoHouse" parent="Base.Theme.DomoHouse">
+        <!-- Animaciones de Transición -->
+        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
+        
+        <!-- Corner Radius por defecto -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.DomoHouse.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.DomoHouse.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.DomoHouse.LargeComponent</item>
+    </style>
+    
+    <!-- Estilos de Forma (Bordes Redondeados) -->
+    <style name="ShapeAppearance.DomoHouse.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.DomoHouse.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.DomoHouse.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    
+    <!-- Animaciones de Ventana -->
+    <style name="WindowAnimationTransition">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
+    
+    <!-- Estilo para Splash Screen -->
+    <style name="Theme.DomoHouse.Splash" parent="Theme.DomoHouse">
+        <!-- Por ahora usando color sólido hasta crear el drawable -->
+        <item name="android:windowBackground">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    
+    <!-- Estilo para imágenes circulares -->
+    <style name="ShapeAppearance.DomoHouse.CircleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

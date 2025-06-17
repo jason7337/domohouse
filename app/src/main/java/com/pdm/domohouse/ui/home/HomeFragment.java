@@ -63,7 +63,8 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
      * Configura la vista de maqueta de casa
      */
     private void setupHouseMapView() {
-        binding.houseMapView.setOnRoomClickListener(this);
+        // TODO: Implementar vista personalizada de casa
+        // binding.houseMapView.setOnRoomClickListener(this);
     }
 
     /**
@@ -73,7 +74,8 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         // Observar habitaciones
         viewModel.rooms.observe(getViewLifecycleOwner(), rooms -> {
             if (rooms != null) {
-                binding.houseMapView.setRooms(rooms);
+                // TODO: Implementar vista personalizada de casa
+                // binding.houseMapView.setRooms(rooms);
             }
         });
 
@@ -88,7 +90,8 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         viewModel.selectedRoom.observe(getViewLifecycleOwner(), room -> {
             if (room != null) {
                 showRoomDetails(room);
-                binding.houseMapView.selectRoom(room);
+                // TODO: Implementar vista personalizada de casa
+                // binding.houseMapView.selectRoom(room);
             } else {
                 hideRoomDetails();
             }
@@ -127,6 +130,11 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         
         // Botón de menú contextual
         binding.menuButton.setOnClickListener(v -> showPopupMenu(v));
+        
+        // Listeners para las habitaciones (3 Arduinos)
+        binding.room1Card.setOnClickListener(v -> onRoomCardClick("Habitación 1", "Arduino 1"));
+        binding.room2Card.setOnClickListener(v -> onRoomCardClick("Habitación 2", "Arduino 2"));
+        binding.room3Card.setOnClickListener(v -> onRoomCardClick("Habitación 3", "Arduino 3"));
         
         // Click en estadística de temperatura para navegar a pantalla de temperatura
         binding.avgTemperatureValue.setOnClickListener(v -> {
@@ -337,6 +345,47 @@ public class HomeFragment extends Fragment implements HouseMapView.OnRoomClickLi
         String message = "Habitación: " + room.getName() + " - " + 
                         room.getOverallStatus().getDisplayName();
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+    }
+    
+    /**
+     * Maneja el click en las tarjetas de habitación (3 Arduinos)
+     */
+    private void onRoomCardClick(String roomName, String arduinoId) {
+        // Mostrar información de la habitación y Arduino
+        String message = roomName + " (" + arduinoId + ") seleccionado";
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        
+        // TODO: Navegar a pantalla específica de la habitación
+        // TODO: Mostrar datos específicos del Arduino
+        // TODO: Permitir control de dispositivos de esa habitación
+        
+        // Por ahora, mostrar información básica
+        showRoomInfoDialog(roomName, arduinoId);
+    }
+    
+    /**
+     * Muestra un diálogo con información de la habitación
+     */
+    private void showRoomInfoDialog(String roomName, String arduinoId) {
+        new AlertDialog.Builder(getContext())
+            .setTitle(roomName)
+            .setMessage("Arduino: " + arduinoId + "\n\n" +
+                       "Estado: Activo\n" +
+                       "Temperatura: 23°C\n" +
+                       "Dispositivos: 3\n" +
+                       "Conexión: Estable\n\n" +
+                       "Próximamente podrás controlar los dispositivos desde aquí.")
+            .setPositiveButton("Ver Dispositivos", (dialog, which) -> {
+                // TODO: Navegar a página de dispositivos filtrada por habitación
+                Navigation.findNavController(binding.getRoot())
+                    .navigate(R.id.action_home_to_devices);
+            })
+            .setNeutralButton("Configurar", (dialog, which) -> {
+                // TODO: Navegar a configuración de habitación
+                Toast.makeText(getContext(), "Configuración de " + roomName, Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("Cerrar", null)
+            .show();
     }
 
     @Override

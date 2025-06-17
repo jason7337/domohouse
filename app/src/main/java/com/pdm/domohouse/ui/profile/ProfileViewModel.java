@@ -5,15 +5,24 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import com.google.firebase.auth.FirebaseUser;
 import com.pdm.domohouse.data.model.UserProfile;
+import com.pdm.domohouse.network.FirebaseAuthManager;
+import com.pdm.domohouse.network.FirebaseDataManager;
 import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
+import com.pdm.domohouse.utils.SecurePreferencesManager;
 
 /**
  * ViewModel para la gestión del perfil de usuario
  * Maneja la información personal, configuraciones y seguridad
- * Versión simplificada para Sesión 5B
+ * Integrado con Firebase Realtime Database y Firebase Auth
  */
 public class ProfileViewModel extends BaseAndroidViewModel {
+    
+    // Managers de Firebase
+    private final FirebaseAuthManager authManager;
+    private final FirebaseDataManager dataManager;
+    private final SecurePreferencesManager preferencesManager;
     
     // LiveData para el perfil del usuario
     private final MutableLiveData<UserProfile> _userProfile = new MutableLiveData<>();
@@ -37,87 +46,144 @@ public class ProfileViewModel extends BaseAndroidViewModel {
     public ProfileViewModel(@NonNull Application application) {
         super(application);
         
-        // Cargar el perfil del usuario con datos de ejemplo
+        // Inicializar managers
+        authManager = FirebaseAuthManager.getInstance();
+        dataManager = FirebaseDataManager.getInstance();
+        preferencesManager = SecurePreferencesManager.getInstance(application);
+        
+        android.util.Log.d("ProfileViewModel", "ProfileViewModel creado, iniciando carga de perfil");
+        
+        // Cargar el perfil del usuario real desde Firebase
         loadUserProfile();
     }
     
     /**
-     * Carga el perfil del usuario (datos reales del usuario en sesión)
+     * Carga el perfil del usuario desde Firebase Auth y Realtime Database
      */
     public void loadUserProfile() {
         setLoading(true);
         
-        // TODO: En producción, obtener datos del usuario autenticado desde Firebase Auth
-        // Para esta demo, simular datos del usuario actual de la sesión
-        
-        // Obtener datos del usuario autenticado (simulado)
-        String currentUserId = getCurrentUserId();
-        String currentUserEmail = getCurrentUserEmail();
-        String currentUserName = getCurrentUserName();
-        
-        // Crear perfil con datos del usuario real
-        UserProfile realProfile = new UserProfile(currentUserId, currentUserName, currentUserEmail);
-        
-        // Obtener foto de perfil si existe
-        String photoUrl = getCurrentUserPhotoUrl();
-        if (photoUrl != null && !photoUrl.isEmpty()) {
-            realProfile.setProfilePhotoUrl(photoUrl);
+        // Obtener usuario autenticado de Firebase
+        FirebaseUser currentUser = authManager.getCurrentUser();
+        if (currentUser == null) {
+            android.util.Log.e("ProfileViewModel", "No hay usuario autenticado");
+            setError("No hay usuario autenticado");
+            setLoading(false);
+            return;
         }
         
-        // Cargar preferencias guardadas
-        loadUserPreferences(realProfile);
+        android.util.Log.d("ProfileViewModel", "Usuario autenticado encontrado: " + currentUser.getUid() + ", Email: " + currentUser.getEmail());
         
-        _userProfile.setValue(realProfile);
-        originalProfile = cloneProfile(realProfile);
+        // Obtener perfil desde Firebase Realtime Database
+        dataManager.getUserProfile(currentUser.getUid(), new FirebaseDataManager.UserProfileCallback() {
+            @Override
+            public void onSuccess(UserProfile profile) {
+                android.util.Log.d("ProfileViewModel", "getUserProfile onSuccess llamado");
+                if (profile != null) {
+                    android.util.Log.d("ProfileViewModel", "Perfil encontrado en Firebase: " + profile.getFullName() + ", Email: " + profile.getEmail() + ", Photo URL: " + profile.getProfilePhotoUrl());
+                    // Perfil encontrado en Firebase
+                    _userProfile.setValue(profile);
+                    originalProfile = cloneProfile(profile);
+                } else {
+                    android.util.Log.w("ProfileViewModel", "Perfil es null, creando nuevo perfil");
+                    // Crear perfil nuevo si no existe
+                    createNewUserProfile(currentUser);
+                }
+                setLoading(false);
+            }
+            
+            @Override
+            public void onError(String error) {
+                android.util.Log.e("ProfileViewModel", "Error al obtener perfil: " + error);
+                // Si falla la carga, intentar crear perfil desde datos de Auth
+                createNewUserProfile(currentUser);
+                setLoading(false);
+            }
+        });
+    }
+    
+    /**
+     * Crea un nuevo perfil de usuario basado en los datos de Firebase Auth
+     */
+    private void createNewUserProfile(FirebaseUser firebaseUser) {
+        android.util.Log.d("ProfileViewModel", "Creando nuevo perfil para usuario: " + firebaseUser.getUid());
+        // Obtener datos del usuario de Firebase Auth
+        String userId = firebaseUser.getUid();
+        String displayName = firebaseUser.getDisplayName();
+        String email = firebaseUser.getEmail();
         
-        setLoading(false);
+        android.util.Log.d("ProfileViewModel", "Datos de Firebase Auth - UID: " + userId + ", DisplayName: " + displayName + ", Email: " + email);
+        
+        // Crear perfil con datos seguros
+        String finalName = displayName != null && !displayName.trim().isEmpty() ? displayName.trim() : "Usuario DomoHouse";
+        String finalEmail = email != null && !email.trim().isEmpty() ? email.trim() : "usuario@domohouse.com";
+        
+        UserProfile newProfile = new UserProfile(userId, finalName, finalEmail);
+        
+        android.util.Log.d("ProfileViewModel", "Nuevo perfil creado - Nombre: " + newProfile.getFullName() + ", Email: " + newProfile.getEmail());
+        
+        // Establecer foto de perfil si existe
+        if (firebaseUser.getPhotoUrl() != null) {
+            String photoUrl = firebaseUser.getPhotoUrl().toString();
+            android.util.Log.d("ProfileViewModel", "Photo URL encontrada: " + photoUrl);
+            newProfile.setProfilePhotoUrl(photoUrl);
+        } else {
+            android.util.Log.d("ProfileViewModel", "No hay photo URL en Firebase Auth");
+        }
+        
+        // Cargar preferencias locales
+        loadUserPreferences(newProfile);
+        
+        // Guardar en Firebase para futuras cargas
+        dataManager.saveUserProfile(newProfile, new FirebaseDataManager.DatabaseCallback() {
+            @Override
+            public void onSuccess() {
+                setMessage("Perfil creado correctamente");
+            }
+            
+            @Override
+            public void onError(String error) {
+                // No es crítico si falla el guardado inicial
+            }
+        });
+        
+        // Asegurar que los datos del perfil están correctamente establecidos antes de asignar
+        if (newProfile.getFullName() == null || newProfile.getFullName().isEmpty()) {
+            newProfile.setFullName("Usuario DomoHouse");
+        }
+        if (newProfile.getEmail() == null || newProfile.getEmail().isEmpty()) {
+            newProfile.setEmail("usuario@domohouse.com");
+        }
+        
+        android.util.Log.d("ProfileViewModel", "Asignando perfil final - Nombre: " + newProfile.getFullName() + ", Email: " + newProfile.getEmail());
+        _userProfile.setValue(newProfile);
+        originalProfile = cloneProfile(newProfile);
     }
     
     /**
-     * Obtiene el ID del usuario actual (simulado - en producción usar Firebase Auth)
-     */
-    private String getCurrentUserId() {
-        // TODO: Implementar con Firebase Auth
-        return "user_" + System.currentTimeMillis();
-    }
-    
-    /**
-     * Obtiene el email del usuario actual (simulado - en producción usar Firebase Auth)
-     */
-    private String getCurrentUserEmail() {
-        // TODO: Implementar con Firebase Auth
-        return "usuario@domohouse.com";
-    }
-    
-    /**
-     * Obtiene el nombre del usuario actual (simulado - en producción usar Firebase Auth)
-     */
-    private String getCurrentUserName() {
-        // TODO: Implementar con Firebase Auth
-        return "Usuario DomoHouse";
-    }
-    
-    /**
-     * Obtiene la URL de la foto del usuario actual (simulado - en producción usar Firebase Auth)
-     */
-    private String getCurrentUserPhotoUrl() {
-        // TODO: Implementar con Firebase Auth
-        return null; // Por defecto sin foto
-    }
-    
-    /**
-     * Carga las preferencias del usuario desde almacenamiento local
+     * Carga las preferencias del usuario desde almacenamiento seguro local
      */
     private void loadUserPreferences(UserProfile profile) {
-        // TODO: Implementar carga desde SharedPreferences o base de datos local
-        // Por ahora usar valores por defecto
-        profile.getPreferences().setNotificationsEnabled(true);
-        profile.getPreferences().setAutoModeEnabled(false);
-        profile.getPreferences().setAnalyticsEnabled(true);
+        if (profile.getPreferences() == null) {
+            profile.setPreferences(new com.pdm.domohouse.data.model.UserPreferences());
+        }
+        
+        // Por ahora usar valores por defecto para las preferencias
+        // TODO: Implementar carga de preferencias desde sistema de almacenamiento local
+        try {
+            profile.getPreferences().setNotificationsEnabled(true);
+            profile.getPreferences().setAutoModeEnabled(false);
+            profile.getPreferences().setAnalyticsEnabled(true);
+        } catch (Exception e) {
+            // Si falla la carga, usar valores por defecto
+            profile.getPreferences().setNotificationsEnabled(true);
+            profile.getPreferences().setAutoModeEnabled(false);
+            profile.getPreferences().setAnalyticsEnabled(true);
+        }
     }
     
     /**
-     * Guarda los cambios del perfil
+     * Guarda los cambios del perfil en Firebase Realtime Database
      */
     public void saveProfile(String newFullName) {
         UserProfile currentProfile = _userProfile.getValue();
@@ -138,17 +204,29 @@ public class ProfileViewModel extends BaseAndroidViewModel {
         currentProfile.setFullName(newFullName.trim());
         currentProfile.updateLastSync();
         
-        // Simular guardado (en futuras sesiones se integrará con Firebase)
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            _isSaving.setValue(false);
-            _hasUnsavedChanges.setValue(false);
-            originalProfile = cloneProfile(currentProfile);
-            setMessage("Perfil actualizado correctamente");
-        }, 1000);
+        // Guardar en Firebase Realtime Database
+        dataManager.saveUserProfile(currentProfile, new FirebaseDataManager.DatabaseCallback() {
+            @Override
+            public void onSuccess() {
+                _isSaving.setValue(false);
+                _hasUnsavedChanges.setValue(false);
+                originalProfile = cloneProfile(currentProfile);
+                setMessage("Perfil actualizado correctamente");
+                
+                // Actualizar la UI con el perfil guardado
+                _userProfile.setValue(currentProfile);
+            }
+            
+            @Override
+            public void onError(String error) {
+                _isSaving.setValue(false);
+                setError("Error al guardar el perfil: " + error);
+            }
+        });
     }
     
     /**
-     * Actualiza la foto de perfil
+     * Actualiza la foto de perfil usando Firebase Storage
      */
     public void updateProfilePhoto(Uri imageUri) {
         UserProfile currentProfile = _userProfile.getValue();
@@ -159,19 +237,47 @@ public class ProfileViewModel extends BaseAndroidViewModel {
         
         _isUploadingImage.setValue(true);
         
-        // Simular subida de imagen (en futuras sesiones se integrará con Firebase Storage)
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            currentProfile.setProfilePhotoUrl(imageUri.toString());
-            currentProfile.updateLastSync();
-            
-            _isUploadingImage.setValue(false);
-            _userProfile.setValue(currentProfile);
-            setMessage("Foto de perfil actualizada");
-        }, 2000);
+        // Subir imagen a Firebase Storage
+        dataManager.uploadProfilePhoto(currentProfile.getUserId(), imageUri, 
+            new FirebaseDataManager.PhotoUploadCallback() {
+                @Override
+                public void onSuccess(String downloadUrl) {
+                    // Actualizar perfil con la nueva URL
+                    currentProfile.setProfilePhotoUrl(downloadUrl);
+                    currentProfile.updateLastSync();
+                    
+                    // Guardar perfil actualizado en Firebase
+                    dataManager.saveUserProfile(currentProfile, new FirebaseDataManager.DatabaseCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _isUploadingImage.setValue(false);
+                            _userProfile.setValue(currentProfile);
+                            setMessage("Foto de perfil actualizada");
+                        }
+                        
+                        @Override
+                        public void onError(String error) {
+                            _isUploadingImage.setValue(false);
+                            setError("Error al guardar la foto: " + error);
+                        }
+                    });
+                }
+                
+                @Override
+                public void onProgress(int progress) {
+                    // Podríamos mostrar el progreso de subida aquí
+                }
+                
+                @Override
+                public void onError(String error) {
+                    _isUploadingImage.setValue(false);
+                    setError("Error al subir la imagen: " + error);
+                }
+            });
     }
     
     /**
-     * Cambia el PIN de acceso
+     * Cambia el PIN de acceso usando SecurePreferencesManager
      */
     public void changePin(String currentPin, String newPin, String confirmPin) {
         // Validar nuevo PIN
@@ -185,12 +291,6 @@ public class ProfileViewModel extends BaseAndroidViewModel {
             return;
         }
         
-        // Validar PIN actual (simulado)
-        if (!"1234".equals(currentPin)) {
-            setError("PIN actual incorrecto");
-            return;
-        }
-        
         UserProfile currentProfile = _userProfile.getValue();
         if (currentProfile == null) {
             setError("No hay perfil disponible");
@@ -199,18 +299,50 @@ public class ProfileViewModel extends BaseAndroidViewModel {
         
         _isSaving.setValue(true);
         
-        // Simular cambio de PIN (en futuras sesiones se integrará con SecurePreferences)
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            currentProfile.setEncryptedPin("encrypted_" + newPin);
+        try {
+            // Verificar PIN actual usando SecurePreferencesManager
+            if (!preferencesManager.verifyPin(currentPin)) {
+                _isSaving.setValue(false);
+                setError("PIN actual incorrecto");
+                return;
+            }
+            
+            // Cambiar el PIN usando el método del manager
+            boolean pinChanged = preferencesManager.changePin(currentPin, newPin);
+            if (!pinChanged) {
+                _isSaving.setValue(false);
+                setError("Error al cambiar el PIN");
+                return;
+            }
+            
+            // Actualizar perfil con PIN cifrado para respaldo en Firebase
+            String encryptedPin = preferencesManager.encryptPin(newPin);
+            currentProfile.setEncryptedPin(encryptedPin);
             currentProfile.updateLastSync();
             
+            // Guardar en Firebase
+            dataManager.saveUserProfile(currentProfile, new FirebaseDataManager.DatabaseCallback() {
+                @Override
+                public void onSuccess() {
+                    _isSaving.setValue(false);
+                    setMessage("PIN actualizado correctamente");
+                }
+                
+                @Override
+                public void onError(String error) {
+                    _isSaving.setValue(false);
+                    setError("PIN actualizado localmente, pero error en respaldo: " + error);
+                }
+            });
+            
+        } catch (Exception e) {
             _isSaving.setValue(false);
-            setMessage("PIN actualizado correctamente");
-        }, 1500);
+            setError("Error al cambiar el PIN: " + e.getMessage());
+        }
     }
     
     /**
-     * Actualiza las preferencias del usuario
+     * Actualiza las preferencias del usuario en almacenamiento local y Firebase
      */
     public void updatePreferences(boolean notificationsEnabled, boolean autoModeEnabled, boolean analyticsEnabled) {
         UserProfile currentProfile = _userProfile.getValue();
@@ -219,7 +351,7 @@ public class ProfileViewModel extends BaseAndroidViewModel {
             return;
         }
         
-        // Actualizar preferencias
+        // Actualizar preferencias en el perfil
         currentProfile.getPreferences().setNotificationsEnabled(notificationsEnabled);
         currentProfile.getPreferences().setAutoModeEnabled(autoModeEnabled);
         currentProfile.getPreferences().setAnalyticsEnabled(analyticsEnabled);
@@ -227,12 +359,32 @@ public class ProfileViewModel extends BaseAndroidViewModel {
         
         _isSaving.setValue(true);
         
-        // Simular guardado de preferencias
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+        try {
+            // Por ahora solo actualizar en Firebase
+            // TODO: Implementar guardado de preferencias en almacenamiento local seguro
+            
+            // Guardar en Firebase para sincronización entre dispositivos
+            dataManager.saveUserProfile(currentProfile, new FirebaseDataManager.DatabaseCallback() {
+                @Override
+                public void onSuccess() {
+                    _isSaving.setValue(false);
+                    _userProfile.setValue(currentProfile);
+                    setMessage("Preferencias actualizadas");
+                }
+                
+                @Override
+                public void onError(String error) {
+                    _isSaving.setValue(false);
+                    // Mantener cambios locales aunque falle Firebase
+                    _userProfile.setValue(currentProfile);
+                    setMessage("Preferencias actualizadas localmente");
+                }
+            });
+            
+        } catch (Exception e) {
             _isSaving.setValue(false);
-            _userProfile.setValue(currentProfile);
-            setMessage("Preferencias actualizadas");
-        }, 500);
+            setError("Error al guardar preferencias: " + e.getMessage());
+        }
     }
     
     /**
@@ -247,6 +399,14 @@ public class ProfileViewModel extends BaseAndroidViewModel {
      */
     public void setUserProfile(UserProfile profile) {
         _userProfile.setValue(profile);
+    }
+    
+    /**
+     * Fuerza la recarga del perfil (para debugging)
+     */
+    public void forceReloadProfile() {
+        android.util.Log.d("ProfileViewModel", "Forzando recarga del perfil");
+        loadUserProfile();
     }
     
     /**
@@ -265,16 +425,20 @@ public class ProfileViewModel extends BaseAndroidViewModel {
     }
     
     /**
-     * Cierra la sesión del usuario
+     * Cierra la sesión del usuario usando Firebase Auth
      */
     public void logout() {
         setLoading(true);
         
-        // Simular cierre de sesión
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            setLoading(false);
-            setMessage("Sesión cerrada correctamente");
-        }, 500);
+        // Cerrar sesión en Firebase Auth (método sin parámetros)
+        authManager.signOut();
+        
+        // Limpiar datos locales inmediatamente
+        _userProfile.setValue(null);
+        originalProfile = null;
+        
+        setLoading(false);
+        setMessage("Sesión cerrada correctamente");
     }
     
     /**

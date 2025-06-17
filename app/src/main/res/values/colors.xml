@@ -1,69 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors - Modern Gradient Scheme -->
-    <color name="primary">#6366F1</color>           <!-- Indigo 500 - Principal -->
-    <color name="primary_dark">#4F46E5</color>      <!-- Indigo 600 - Oscuro -->
-    <color name="primary_light">#A5B4FC</color>     <!-- Indigo 300 - Claro -->
-    <color name="primary_variant">#818CF8</color>   <!-- Indigo 400 - Variante -->
+    <!-- 🎨 PALETA DE COLORES CLARA - DOMOHOUSE -->
+    <!-- Diseñada para una experiencia moderna, limpia y accesible -->
     
-    <!-- Secondary Colors - Warm Accent -->
-    <color name="secondary">#F59E0B</color>         <!-- Amber 500 - Secundario -->
-    <color name="secondary_dark">#D97706</color>    <!-- Amber 600 - Oscuro -->
-    <color name="secondary_light">#FCD34D</color>   <!-- Amber 300 - Claro -->
+    <!-- Primary Colors - Azul Moderno y Elegante -->
+    <color name="primary">#2196F3</color>           <!-- Azul vibrante - Principal -->
+    <color name="primary_dark">#1976D2</color>      <!-- Azul más oscuro - Para contraste -->
+    <color name="primary_light">#64B5F6</color>     <!-- Azul claro - Acentos suaves -->
+    <color name="primary_variant">#42A5F5</color>   <!-- Azul medio - Variante -->
     
-    <!-- Background Colors - Dark Theme Friendly -->
-    <color name="background">#1E293B</color>        <!-- Dark slate background -->
-    <color name="surface">#334155</color>           <!-- Lighter dark surface -->
-    <color name="surface_variant">#475569</color>   <!-- Slate 600 -->
-    <color name="surface_elevated">#3F4B5C</color>  <!-- Elevated dark surface -->
+    <!-- Secondary Colors - Verde Tecnológico -->
+    <color name="secondary">#4CAF50</color>         <!-- Verde moderno - Secundario -->
+    <color name="secondary_dark">#388E3C</color>    <!-- Verde oscuro - Contraste -->
+    <color name="secondary_light">#81C784</color>   <!-- Verde claro - Acentos -->
     
-    <!-- Text Colors - Light for Dark Backgrounds -->
-    <color name="text_primary">#F8FAFC</color>      <!-- Light slate for readability -->
-    <color name="text_secondary">#CBD5E1</color>    <!-- Lighter slate 300 -->
-    <color name="text_tertiary">#94A3B8</color>     <!-- Slate 400 -->
-    <color name="text_on_primary">#FFFFFF</color>   <!-- White on primary -->
+    <!-- Background Colors - Blancos y Grises Muy Claros -->
+    <color name="background">#FFFFFF</color>        <!-- Blanco puro - Fondo principal -->
+    <color name="surface">#FAFAFA</color>           <!-- Gris ultra claro - Superficies -->
+    <color name="surface_variant">#F5F5F5</color>   <!-- Gris claro - Variante -->
+    <color name="surface_elevated">#FFFFFF</color>  <!-- Blanco - Superficies elevadas -->
     
-    <!-- Status Colors - Modern & Vibrant -->
-    <color name="success">#10B981</color>           <!-- Emerald 500 -->
-    <color name="success_light">#6EE7B7</color>     <!-- Emerald 300 -->
-    <color name="warning">#F59E0B</color>           <!-- Amber 500 -->
-    <color name="warning_light">#FCD34D</color>     <!-- Amber 300 -->
-    <color name="error">#EF4444</color>             <!-- Red 500 -->
-    <color name="error_light">#FCA5A5</color>       <!-- Red 300 -->
-    <color name="info">#3B82F6</color>              <!-- Blue 500 -->
-    <color name="info_light">#93C5FD</color>        <!-- Blue 300 -->
+    <!-- Elevation Colors - Para sombras suaves -->
+    <color name="elevation_overlay">#08000000</color>  <!-- Sombra muy sutil -->
+    <color name="shadow_light">#1A000000</color>       <!-- Sombra ligera -->
+    <color name="shadow_medium">#33000000</color>      <!-- Sombra media -->
     
-    <!-- Border & Divider Colors -->
-    <color name="border">#E2E8F0</color>            <!-- Slate 200 -->
-    <color name="divider">#CBD5E1</color>           <!-- Slate 300 -->
-    <color name="outline">#94A3B8</color>           <!-- Slate 400 -->
+    <!-- Text Colors - Grises Oscuros para Contraste -->
+    <color name="text_primary">#212121</color>      <!-- Gris muy oscuro - Texto principal -->
+    <color name="text_secondary">#757575</color>    <!-- Gris medio - Texto secundario -->
+    <color name="text_tertiary">#9E9E9E</color>     <!-- Gris claro - Texto terciario -->
+    <color name="text_on_primary">#FFFFFF</color>   <!-- Blanco - Texto sobre primario -->
+    <color name="text_hint">#BDBDBD</color>         <!-- Gris muy claro - Hints -->
     
-    <!-- Smart Home Specific Colors -->
-    <color name="device_on">#10B981</color>         <!-- Green for ON state -->
-    <color name="device_off">#6B7280</color>        <!-- Gray for OFF state -->
-    <color name="temperature_cold">#3B82F6</color>  <!-- Blue for cold -->
-    <color name="temperature_warm">#F59E0B</color>  <!-- Amber for warm -->
-    <color name="temperature_hot">#EF4444</color>   <!-- Red for hot -->
+    <!-- Status Colors - Vibrantes pero Suaves -->
+    <color name="success">#4CAF50</color>           <!-- Verde éxito -->
+    <color name="success_light">#A5D6A7</color>     <!-- Verde claro -->
+    <color name="success_background">#E8F5E9</color> <!-- Verde muy claro - Fondo -->
+    <color name="warning">#FF9800</color>           <!-- Naranja advertencia -->
+    <color name="warning_light">#FFCC80</color>     <!-- Naranja claro -->
+    <color name="warning_background">#FFF3E0</color> <!-- Naranja muy claro - Fondo -->
+    <color name="error">#F44336</color>             <!-- Rojo error -->
+    <color name="error_light">#EF9A9A</color>       <!-- Rojo claro -->
+    <color name="error_background">#FFEBEE</color>  <!-- Rojo muy claro - Fondo -->
+    <color name="info">#2196F3</color>              <!-- Azul información -->
+    <color name="info_light">#90CAF9</color>        <!-- Azul claro -->
+    <color name="info_background">#E3F2FD</color>   <!-- Azul muy claro - Fondo -->
     
-    <!-- Button Colors -->
-    <color name="button_primary">#6366F1</color>    <!-- Primary button -->
-    <color name="button_secondary">#475569</color>  <!-- Dark secondary button bg -->
-    <color name="button_text_secondary">#F8FAFC</color> <!-- Light secondary button text -->
-    <color name="button_disabled">#64748B</color>   <!-- Disabled button -->
+    <!-- Border & Divider Colors - Sutiles -->
+    <color name="border">#E0E0E0</color>            <!-- Gris muy claro - Bordes -->
+    <color name="divider">#EEEEEE</color>           <!-- Gris ultra claro - Divisores -->
+    <color name="outline">#BDBDBD</color>           <!-- Gris claro - Contornos -->
+    <color name="divider_light">#F5F5F5</color>     <!-- Casi invisible - Divisor sutil -->
     
-    <!-- Card & Component Colors -->
-    <color name="card_background">#334155</color>   <!-- Dark card background -->
-    <color name="card_shadow">#0F172A40</color>     <!-- Darker shadow -->
-    <color name="input_background">#475569</color>  <!-- Dark input background -->
-    <color name="input_border">#64748B</color>      <!-- Lighter border -->
-    <color name="input_focus">#6366F1</color>       <!-- Input field focus -->
+    <!-- Smart Home Specific Colors - Estados de Dispositivos -->
+    <color name="device_on">#4CAF50</color>         <!-- Verde - Dispositivo encendido -->
+    <color name="device_off">#BDBDBD</color>        <!-- Gris claro - Dispositivo apagado -->
+    <color name="device_inactive">#E0E0E0</color>   <!-- Gris muy claro - Inactivo -->
+    <color name="temperature_cold">#2196F3</color>  <!-- Azul - Temperatura fría -->
+    <color name="temperature_warm">#FF9800</color>  <!-- Naranja - Temperatura cálida -->
+    <color name="temperature_hot">#F44336</color>   <!-- Rojo - Temperatura caliente -->
+    <color name="temperature_neutral">#4CAF50</color> <!-- Verde - Temperatura ideal -->
     
-    <!-- Bottom Navigation Colors -->
-    <color name="bottom_nav_selected">#6366F1</color>   <!-- Selected item -->
-    <color name="bottom_nav_unselected">#94A3B8</color> <!-- Unselected item -->
-    <color name="bottom_nav_background">#334155</color> <!-- Dark background -->
+    <!-- Button Colors - Modernos y Accesibles -->
+    <color name="button_primary">#2196F3</color>    <!-- Botón primario -->
+    <color name="button_primary_pressed">#1976D2</color> <!-- Botón primario presionado -->
+    <color name="button_secondary">#FFFFFF</color>  <!-- Botón secundario - Blanco -->
+    <color name="button_secondary_border">#E0E0E0</color> <!-- Borde botón secundario -->
+    <color name="button_text_secondary">#2196F3</color>   <!-- Texto botón secundario -->
+    <color name="button_disabled">#BDBDBD</color>   <!-- Botón deshabilitado -->
+    <color name="button_disabled_text">#9E9E9E</color> <!-- Texto botón deshabilitado -->
     
-    <!-- Legacy Colors -->
+    <!-- Card & Component Colors - Superficies Elegantes -->
+    <color name="card_background">#FFFFFF</color>   <!-- Fondo de tarjetas -->
+    <color name="card_shadow">#1A000000</color>     <!-- Sombra suave de tarjetas -->
+    <color name="card_border">#F5F5F5</color>       <!-- Borde muy sutil -->
+    <color name="input_background">#F5F5F5</color>  <!-- Fondo de inputs -->
+    <color name="input_border">#E0E0E0</color>      <!-- Borde de inputs -->
+    <color name="input_focus">#2196F3</color>       <!-- Input enfocado -->
+    <color name="input_error">#F44336</color>       <!-- Input con error -->
+    
+    <!-- Bottom Navigation Colors - Diseño Limpio -->
+    <color name="bottom_nav_selected">#2196F3</color>    <!-- Item seleccionado -->
+    <color name="bottom_nav_unselected">#9E9E9E</color>  <!-- Item no seleccionado -->
+    <color name="bottom_nav_background">#FFFFFF</color>  <!-- Fondo blanco -->
+    <color name="bottom_nav_shadow">#0D000000</color>    <!-- Sombra muy sutil -->
+    
+    <!-- Special Effects - Transparencias y Overlays -->
+    <color name="scrim">#52000000</color>           <!-- Overlay oscuro -->
+    <color name="scrim_light">#33FFFFFF</color>     <!-- Overlay claro -->
+    <color name="ripple">#1F000000</color>          <!-- Efecto ripple -->
+    <color name="ripple_primary">#332196F3</color>  <!-- Ripple primario -->
+    <color name="backdrop">#F5F5F5</color>          <!-- Fondo de backdrop -->
+    
+    <!-- Room/Zone Specific Colors - Para Habitaciones -->
+    <color name="room_living">#E3F2FD</color>       <!-- Sala - Azul muy claro -->
+    <color name="room_bedroom">#F3E5F5</color>      <!-- Dormitorio - Púrpura muy claro -->
+    <color name="room_kitchen">#FFF3E0</color>      <!-- Cocina - Naranja muy claro -->
+    <color name="room_bathroom">#E0F2F1</color>     <!-- Baño - Cyan muy claro -->
+    <color name="room_garage">#EFEBE9</color>       <!-- Garage - Marrón muy claro -->
+    
+    <!-- Legacy Colors - Compatibilidad -->
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="transparent">#00000000</color>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item para mostrar actividad reciente -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/spacing_medium"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Icono de la actividad -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        app:cardBackgroundColor="@color/surface_variant"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
+
+        <ImageView
+            android:id="@+id/activityIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_lights"
+            app:tint="@color/text_secondary"
+            tools:src="@drawable/ic_lights" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Información de la actividad -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/spacing_medium"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/activityTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Luz de dormitorio encendida"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_size_medium"
+            tools:text="Luz de sala encendida" />
+
+        <TextView
+            android:id="@+id/activitySubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dormitorio principal"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_size_small"
+            android:layout_marginTop="2dp"
+            tools:text="Sala de estar" />
+
+    </LinearLayout>
+
+    <!-- Tiempo de la actividad -->
+    <TextView
+        android:id="@+id/activityTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hace 5 min"
+        android:textColor="@color/text_tertiary"
+        android:textSize="@dimen/text_size_small"
+        tools:text="Hace 2 min" />
+
+</LinearLayout>

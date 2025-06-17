@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.pdm.domohouse.network.FirebaseAuthManager;
 import com.pdm.domohouse.ui.base.BaseAndroidViewModel;
 
 /**
@@ -53,14 +54,25 @@ public class SplashViewModel extends BaseAndroidViewModel {
     }
     
     /**
-     * Verifica si el usuario está autenticado
-     * Por ahora siempre navega a Login
-     * TODO: Implementar verificación real con Firebase en sesiones futuras
+     * Verifica si el usuario está autenticado con Firebase
      */
     private void checkUserAuthentication() {
-        // Por ahora siempre ir a Login
-        // En futuras sesiones se verificará con Firebase
-        _navigationEvent.setValue(NavigationDestination.LOGIN);
+        try {
+            FirebaseAuthManager authManager = FirebaseAuthManager.getInstance();
+            
+            // Verificar si hay un usuario autenticado
+            if (authManager.isUserSignedIn()) {
+                android.util.Log.d("SplashViewModel", "Usuario autenticado encontrado, navegando a Home");
+                _navigationEvent.setValue(NavigationDestination.HOME);
+            } else {
+                android.util.Log.d("SplashViewModel", "No hay usuario autenticado, navegando a Login");
+                _navigationEvent.setValue(NavigationDestination.LOGIN);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("SplashViewModel", "Error verificando autenticación: " + e.getMessage());
+            // En caso de error, ir a login por seguridad
+            _navigationEvent.setValue(NavigationDestination.LOGIN);
+        }
     }
     
     @Override

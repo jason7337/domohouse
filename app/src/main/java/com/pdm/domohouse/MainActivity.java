@@ -1,12 +1,14 @@
 package com.pdm.domohouse;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.imageview.ShapeableImageView;
 
 /**
  * Actividad principal de la aplicación
@@ -17,18 +19,23 @@ public class MainActivity extends AppCompatActivity {
     // Controlador de navegación
     private NavController navController;
     
-    // Configuración de la barra de aplicación
-    private AppBarConfiguration appBarConfiguration;
-    
     // BottomNavigationView para navegación principal
     private BottomNavigationView bottomNavigationView;
+    
+    // Elementos del header
+    private View appHeader;
+    private ImageView appLogo;
+    private ShapeableImageView profileImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        // Inicializar Bottom Navigation primero
+        // Inicializar componentes del header
+        initializeHeaderComponents();
+        
+        // Inicializar Bottom Navigation
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         
         // Configurar Navigation Component en el próximo ciclo de UI para asegurar que el FragmentContainerView esté listo
@@ -36,6 +43,25 @@ public class MainActivity extends AppCompatActivity {
             setupNavigation();
             setupBottomNavigation();
         });
+    }
+    
+    /**
+     * Inicializa los componentes del header
+     */
+    private void initializeHeaderComponents() {
+        appHeader = findViewById(R.id.app_header);
+        appLogo = findViewById(R.id.appLogo);
+        profileImage = findViewById(R.id.profileImage);
+        
+        // Configurar click listener para la imagen de perfil
+        if (profileImage != null) {
+            profileImage.setOnClickListener(v -> {
+                // Navegar al fragmento de perfil cuando se toque la imagen
+                if (navController != null) {
+                    navController.navigate(R.id.profileFragment);
+                }
+            });
+        }
     }
     
     /**
@@ -50,28 +76,20 @@ public class MainActivity extends AppCompatActivity {
             // Obtener el NavController del NavHostFragment
             navController = navHostFragment.getNavController();
             
-            // Configurar la barra de aplicación con el NavController
-            // Los fragmentos de nivel superior no mostrarán el botón de retroceso
-            appBarConfiguration = new AppBarConfiguration.Builder(
-                    R.id.splashFragment,
-                    R.id.loginFragment,
-                    R.id.homeFragment,
-                    R.id.profileFragment,
-                    R.id.devicesFragment,
-                    R.id.settingsFragment
-            ).build();
-            
-            // Listener para mostrar/ocultar bottom navigation según el destino
+            // Listener para mostrar/ocultar bottom navigation y header según el destino
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-                if (bottomNavigationView != null) {
-                    // Mostrar bottom navigation solo en fragmentos principales
-                    boolean showBottomNav = destination.getId() == R.id.homeFragment ||
-                                          destination.getId() == R.id.profileFragment ||
-                                          destination.getId() == R.id.devicesFragment ||
-                                          destination.getId() == R.id.settingsFragment;
+                if (bottomNavigationView != null && appHeader != null) {
+                    // Mostrar bottom navigation y header solo en fragmentos principales
+                    boolean showMainUI = destination.getId() == R.id.homeFragment ||
+                                       destination.getId() == R.id.profileFragment ||
+                                       destination.getId() == R.id.devicesFragment ||
+                                       destination.getId() == R.id.settingsFragment;
                     
-                    bottomNavigationView.setVisibility(showBottomNav ? 
+                    bottomNavigationView.setVisibility(showMainUI ? 
                         BottomNavigationView.VISIBLE : BottomNavigationView.GONE);
+                    
+                    appHeader.setVisibility(showMainUI ? 
+                        View.VISIBLE : View.GONE);
                 }
             });
         }
@@ -89,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     
     @Override
     public boolean onSupportNavigateUp() {
-        // Manejar el botón de navegación hacia arriba - simplificado para evitar errores de ActionBar
+        // Manejar el botón de navegación hacia arriba
         if (navController != null) {
             return navController.navigateUp() || super.onSupportNavigateUp();
         }

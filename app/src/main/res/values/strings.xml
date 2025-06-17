@@ -62,6 +62,10 @@
     <string name="no_devices_title">No hay dispositivos</string>
     <string name="no_devices_message">Agrega tu primer dispositivo inteligente para comenzar a controlar tu hogar</string>
     
+    <!-- Perfil de usuario -->
+    <string name="default_user_name">Usuario DomoHouse</string>
+    <string name="default_user_email">usuario@domohouse.com</string>
+    
     <!-- Estados de dispositivos -->
     <string name="device_offline">Sin conexión</string>
     <string name="device_needs_attention">Necesita atención</string>
@@ -201,4 +205,39 @@
     <string name="ok">Aceptar</string>
     <string name="error">Error</string>
     <string name="logo_description">Logo de Domo House</string>
+    
+    <!-- Navigation Drawer -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_devices">Dispositivos</string>
+    <string name="nav_lights">Luces</string>
+    <string name="nav_temperature">Temperatura</string>
+    <string name="nav_schedule">Programación</string>
+    <string name="nav_reports">Reportes</string>
+    <string name="nav_history">Historial</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="nav_settings">Configuración</string>
+    <string name="nav_help">Ayuda</string>
+    <string name="nav_logout">Cerrar Sesión</string>
+    <string name="nav_section_reports">Informes</string>
+    <string name="nav_section_settings">Ajustes</string>
+    <string name="navigation_drawer_open">Abrir menú de navegación</string>
+    <string name="navigation_drawer_close">Cerrar menú de navegación</string>
+    
+    <!-- Configuraciones - Settings -->
+    <string name="general_settings">Configuración General</string>
+    <string name="app_theme">Tema de la Aplicación</string>
+    <string name="language">Idioma</string>
+    <string name="measurement_units">Unidades de Medida</string>
+    <string name="push_notifications">Notificaciones Push</string>
+    <string name="security_alerts">Alertas de Seguridad</string>
+    <string name="notification_sounds">Sonidos de Notificación</string>
+    <string name="privacy">Privacidad</string>
+    <string name="usage_analytics">Análisis de Uso</string>
+    <string name="manage_data">Gestionar Datos</string>
+    <string name="about">Acerca de</string>
+    <string name="app_version">Versión de la Aplicación</string>
+    <string name="terms_conditions">Términos y Condiciones</string>
+    <string name="privacy_policy">Política de Privacidad</string>
+    <string name="clear_cache">Limpiar Caché</string>
+    <string name="reset_settings">Restablecer Configuración</string>
 </resources>

@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import com.bumptech.glide.Glide;
 import com.pdm.domohouse.R;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import com.pdm.domohouse.databinding.FragmentProfileBinding;
 import com.pdm.domohouse.data.model.UserProfile;
 
@@ -93,6 +95,14 @@ public class ProfileFragment extends Fragment {
         
         // Botón de cerrar sesión
         binding.logoutButton.setOnClickListener(v -> showLogoutConfirmation());
+        
+        // DEBUG: Agregar un listener de click largo en el header para forzar recarga
+        binding.profileHeaderCard.setOnLongClickListener(v -> {
+            android.util.Log.d("ProfileFragment", "Long click detectado, forzando recarga del perfil");
+            viewModel.forceReloadProfile();
+            Toast.makeText(getContext(), "Recargando perfil...", Toast.LENGTH_SHORT).show();
+            return true;
+        });
         
         // Listeners para detectar cambios en preferencias
         binding.notificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -172,26 +182,121 @@ public class ProfileFragment extends Fragment {
      * Actualiza la UI con los datos del perfil
      */
     private void updateProfileUI(UserProfile profile) {
-        if (profile == null) return;
+        if (profile == null) {
+            android.util.Log.w("ProfileFragment", "Profile is null, cannot update UI");
+            return;
+        }
         
-        // Cargar foto de perfil si existe
-        if (profile.getProfilePhotoUrl() != null && !profile.getProfilePhotoUrl().isEmpty()) {
+        android.util.Log.d("ProfileFragment", "Updating UI with profile: " + profile.getFullName() + ", " + profile.getEmail());
+        
+        // Actualizar nombre y email manualmente para asegurar que se muestren
+        if (profile.getFullName() != null && !profile.getFullName().isEmpty()) {
+            binding.userNameText.setText(profile.getFullName());
+            binding.nameEditText.setText(profile.getFullName());
+        }
+        
+        if (profile.getEmail() != null && !profile.getEmail().isEmpty()) {
+            binding.userEmailText.setText(profile.getEmail());
+            binding.emailEditText.setText(profile.getEmail());
+        }
+        
+        // Actualizar preferencias si existen
+        if (profile.getPreferences() != null) {
+            binding.notificationsSwitch.setChecked(profile.getPreferences().isNotificationsEnabled());
+            binding.autoModeSwitch.setChecked(profile.getPreferences().isAutoModeEnabled());
+            binding.temperatureAlertsSwitch.setChecked(profile.getPreferences().isAnalyticsEnabled());
+        }
+        
+        // Cargar foto de perfil
+        loadProfileImage(profile.getProfilePhotoUrl());
+    }
+    
+    /**
+     * Carga la imagen de perfil usando Glide
+     */
+    private void loadProfileImage(String profilePhotoUrl) {
+        android.util.Log.d("ProfileFragment", "Loading profile image: " + profilePhotoUrl);
+        
+        if (profilePhotoUrl != null && !profilePhotoUrl.isEmpty()) {
+            // Cargar imagen desde URL
+            android.util.Log.d("ProfileFragment", "Cargando imagen desde URL: " + profilePhotoUrl);
             Glide.with(this)
-                .load(profile.getProfilePhotoUrl())
+                .load(profilePhotoUrl)
                 .placeholder(R.drawable.ic_person)
                 .error(R.drawable.ic_person)
                 .circleCrop()
                 .into(binding.profileImage);
+        } else {
+            // Intentar cargar desde Gravatar usando el email del usuario
+            UserProfile profile = viewModel.userProfile.getValue();
+            if (profile != null && profile.getEmail() != null && !profile.getEmail().isEmpty()) {
+                String gravatarUrl = getGravatarUrl(profile.getEmail());
+                android.util.Log.d("ProfileFragment", "Intentando cargar Gravatar: " + gravatarUrl);
+                
+                Glide.with(this)
+                    .load(gravatarUrl)
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .circleCrop()
+                    .into(binding.profileImage);
+            } else {
+                // Mostrar imagen por defecto
+                android.util.Log.d("ProfileFragment", "No hay email para Gravatar, usando imagen por defecto");
+                binding.profileImage.setImageResource(R.drawable.ic_person);
+                binding.profileImage.setColorFilter(null);
+            }
         }
     }
     
     /**
-     * Abre el selector de imágenes
+     * Genera la URL de Gravatar para el email del usuario
+     */
+    private String getGravatarUrl(String email) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(email.trim().toLowerCase().getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return "https://www.gravatar.com/avatar/" + sb.toString() + "?s=200&d=404";
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Abre un diálogo para seleccionar foto de perfil
      */
     private void openImagePicker() {
+        new AlertDialog.Builder(getContext())
+            .setTitle("Cambiar foto de perfil")
+            .setMessage("¿Cómo quieres actualizar tu foto de perfil?")
+            .setPositiveButton("Galería", (dialog, which) -> openGallery())
+            .setNegativeButton("Cámara", (dialog, which) -> openCamera())
+            .setNeutralButton("Cancelar", null)
+            .show();
+    }
+    
+    /**
+     * Abre la galería para seleccionar imagen
+     */
+    private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
         imagePickerLauncher.launch(Intent.createChooser(intent, "Seleccionar foto de perfil"));
+    }
+    
+    /**
+     * Abre la cámara para tomar una foto
+     */
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (intent.resolveActivity(requireActivity().getPackageManager()) != null) {
+            imagePickerLauncher.launch(intent);
+        } else {
+            Toast.makeText(getContext(), "No se encontró una aplicación de cámara", Toast.LENGTH_SHORT).show();
+        }
     }
     
     /**

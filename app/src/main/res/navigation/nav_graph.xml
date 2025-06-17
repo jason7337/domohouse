@@ -156,5 +156,12 @@
         android:name="com.pdm.domohouse.ui.devices.DevicesFragment"
         android:label="Devices"
         tools:layout="@layout/fragment_devices" />
+        
+    <!-- Fragmento de Configuraciones -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.pdm.domohouse.ui.settings.SettingsFragment"
+        android:label="@string/settings_title"
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>
